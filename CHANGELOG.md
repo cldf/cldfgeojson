@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+- Allow specifying buffer when aggregating shapes.
+- Provide symbols for import on package level.
+
+
 ## [0.1.0] - 2024-04-25
 
 Functionality to add speaker area information to CLDF datasets
