@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [0.2.0] - 2024-04-26
 
 - Allow specifying buffer when aggregating shapes.
 - Provide symbols for import on package level.
