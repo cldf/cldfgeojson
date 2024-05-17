@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [0.2.1] - 2024-05-17
 
 - Subtract buffer from merged geometries after merging.
 
