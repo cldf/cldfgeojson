@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Subtract buffer from merged geometries after merging.
+
+
 ## [0.2.0] - 2024-04-26
 
 - Allow specifying buffer when aggregating shapes.

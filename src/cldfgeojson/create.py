@@ -75,7 +75,8 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
 
     :param features: An iterable of geographic structures.
     :param buffer: A buffer to be added to the shapes in order to make them overlap, thereby \
-    removing internal boundaries when merging. Specify `None` to add no buffer.
+    removing internal boundaries when merging. Will be subtracted from the merged geometry. \
+    Specify `None` to add no buffer.
     :return: The resulting Geometry object representing the merged shapes.
     """
     def get_shape(f):
@@ -83,13 +84,17 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
         if buffer:
             s = s.buffer(buffer)
         return s
-    return union_all([get_shape(f) for f in features])
+    res = union_all([get_shape(f) for f in features])
+    if buffer:
+        res = res.buffer(-buffer)
+    return res.__geo_interface__
 
 
 def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
               glottolog: typing.Union[Glottolog, Dataset],
               level: str = 'language',
               buffer: typing.Union[float, None] = 0.001,
+              opacity: float = 0.8,
               ) -> typing.Tuple[
         typing.List[geojson.Feature],
         typing.List[typing.Tuple[Languoid, list, str]]]:
@@ -154,7 +159,6 @@ def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
                 'fill': colors[lang2fam[gc]],
                 'family': glangs[lang2fam[gc]].name if lang2fam[gc] != gc else None,
                 'cldf:languageReference': gc,
-                'fill-opacity': 0.8},
-            geometry=merged_geometry(
-                [p[1] for p in polys_by_code[gc]], buffer=buffer).__geo_interface__))
+                'fill-opacity': opacity},
+            geometry=merged_geometry([p[1] for p in polys_by_code[gc]], buffer=buffer)))
     return features, languoids
