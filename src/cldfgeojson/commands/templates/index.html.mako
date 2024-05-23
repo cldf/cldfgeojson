@@ -57,18 +57,20 @@
     </div>
 </div>
 <script>
-    const draw = ${'true' if with_draw else 'false'};
-    const map = L.map('map').setView([37.8, -96], 4);
-    var drawnItems = L.featureGroup().addTo(map);
-    const geojson = ${geojson};
-    const layers = {};
+    var draw = ${'true' if with_draw else 'false'},
+        map = L.map('map').setView([37.8, -96], 4),
+        drawnItems = L.featureGroup(),
+        geojson = ${geojson},
+        layers = {},
+        latLngBounds = L.latLngBounds([[${bounds[1]}, ${bounds[0]}], [${bounds[3]}, ${bounds[2]}]]);
 
-    const latLngBounds = L.latLngBounds([[${bounds[1]}, ${bounds[0]}], [${bounds[3]}, ${bounds[2]}]]);
-
-    var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        osm = L.tileLayer(osmUrl, {maxZoom: 20, attribution: osmAttrib});
-    osm.addTo(map);
+    drawnItems.addTo(map)
+    L.tileLayer(
+        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            maxZoom: 20,
+            attribution: '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
     if (draw) {
         map.addControl(new L.Control.Draw({
             edit: {featureGroup: drawnItems, poly: {allowIntersection: false}},
@@ -83,8 +85,7 @@
     input.addEventListener("input", (event) => {imageOverlay.setOpacity(event.target.value / 100)});
     if (draw) {
         map.on(L.Draw.Event.CREATED, function (event) {
-            var layer = event.layer;
-            drawnItems.addLayer(layer);
+            drawnItems.addLayer(event.layer);
         });
         document.getElementById('delete').onclick = function (e) {
             drawnItems.clearLayers();
@@ -94,9 +95,8 @@
         }
     }
     for (const name in geojson) {
-        var layer = L.geoJSON(geojson[name]);
-        layers[name] = layer;
-        layer.addTo(map)
+        layers[name] = L.geoJSON(geojson[name]);
+        layers[name].addTo(map)
     }
     L.control.layers({}, layers).addTo(map);
     L.rectangle(latLngBounds).addTo(map);

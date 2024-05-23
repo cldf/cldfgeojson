@@ -62,7 +62,7 @@ def run(args):
 
     html = tmpl.render(
         img=data_url(img, 'image/jpeg') if isinstance(img, pathlib.Path) else img,
-        bounds = bounds['bbox'],
+        bounds=bounds['bbox'],
         geojson=json.dumps(dict({n.stem: load(n) for n in args.geojson})),
         with_draw=args.with_draw,
     )
