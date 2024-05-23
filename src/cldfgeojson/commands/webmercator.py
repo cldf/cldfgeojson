@@ -6,7 +6,7 @@ image file using QGIS' GeoReferencer tool.
 
 If a JPEG file is specified as output, an additional corresponding GeoJSON file (with suffix
 .bounds.geojson) will be created, storing the output of rasterio's bounds command as a way to
-"locate" the image on a map.
+"locate" the image on a map. The conversion to JPEG requires the gdal_translate command.
 """
 import json
 import shutil

@@ -1,11 +1,10 @@
 """
 Create an HTML page displaying a leaflet map overlaid with a given, geo-referenced image and
 tools to draw GeoJSON objects on the map.
-
-Creates page index.html + subdir leafletdraw
 """
 import json
 import pathlib
+import argparse
 import mimetypes
 import webbrowser
 
@@ -19,12 +18,7 @@ from .webmercator import to_webmercator, bounds_path
 
 
 def register(parser):
-    """
-    optional GeoJSON layer(s)
-    image
-    bounds
-    with leaflet.draw or without? without would allow single-file result!
-    """
+    parser.add_argument('--test', action='store_true', default=False, help=argparse.SUPPRESS)
     parser.add_argument(
         'input',
         type=PathType(type='file'),
@@ -33,17 +27,21 @@ def register(parser):
     parser.add_argument(
         '--out',
         type=PathType(type='file', must_exist=False),
+        help='Filename for the resulting HTML file.',
         default=pathlib.Path('index.html'),
     )
     parser.add_argument(
         '--with-draw',
+        help="Flag signaling whether to include controls to draw (and export) GeoJSON objects on "
+             "the map",
         action='store_true',
         default=False,
     )
     parser.add_argument(
         'geojson',
         nargs='*',
-        help='Additional GeoJSON layers to be overlaid on the map.',
+        help='Additional GeoJSON layers from files to be overlaid on the map, specified by file '
+             'name.',
         type=PathType(type='file'),
     )
 
@@ -69,4 +67,5 @@ def run(args):
         with_draw=args.with_draw,
     )
     args.out.write_text(html, encoding='utf8')
-    webbrowser.open(str(args.out))
+    if not args.test:
+        webbrowser.open(str(args.out))  # pragma: no cover
