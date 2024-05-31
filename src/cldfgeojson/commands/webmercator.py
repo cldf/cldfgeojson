@@ -44,10 +44,10 @@ def register(parser):
 
 
 def run(args):
-    to_webmercator(args.geotiff, args.output, not args.no_scale)
+    to_webmercator(args.geotiff, args.output, not args.no_scale, log=args.log)
 
 
-def to_webmercator(in_, out, scale=True):
+def to_webmercator(in_, out, scale=True, log=None):
     fmt = 'jpg' if mimetypes.guess_type(str(out))[0] == 'image/jpeg' else 'geotiff'
 
     with TemporaryDirectory() as tmp:
@@ -60,7 +60,20 @@ def to_webmercator(in_, out, scale=True):
         if scale:
             cmdline.append('-scale')
         cmdline.extend([str(webtif), str(out)])
-        subprocess.check_call(cmdline)
+        #
+        # Generating compressed JPEG from 4-band input doesn't seem to work. Somewhat clumsily, we
+        # detect this situation by running gdal_translate enabling compression and then check for
+        # warnings.
+        #
+        pipes = subprocess.Popen(cmdline, stderr=subprocess.PIPE)
+        _, err = pipes.communicate()
+        if pipes.returncode != 0:  # pragma: no cover
+            raise ValueError(err)
+        if (b'Warning' in err) and (b'4-band JPEGs') in err:  # pragma: no cover
+            if log:
+                log.info('Re-running gdal_translate to accomodate 4-band input.')
+            # Run gdal_translate again without compression.
+            subprocess.check_call([cmd for cmd in cmdline if cmd != '-scale'])
         dump(json.loads(subprocess.check_output(['rio', 'bounds', str(webtif)])), bounds_path(out))
     return out
 
