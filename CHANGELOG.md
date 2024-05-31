@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Make sure we can also convert 4-band input to usable JPEG in webmercator projection.
+
+
 ## [0.2.1] - 2024-05-17
 
 - Subtract buffer from merged geometries after merging.
