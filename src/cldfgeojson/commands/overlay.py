@@ -44,6 +44,11 @@ def register(parser):
              'name.',
         type=PathType(type='file'),
     )
+    parser.add_argument(
+        '--no-scale',
+        action='store_true',
+        default=False,
+    )
 
 
 def run(args):
@@ -52,7 +57,9 @@ def run(args):
     fmt = mimetypes.guess_type(args.input.name)[0]
     if fmt == 'image/tiff':
         with TemporaryDirectory() as tmp:
-            img = data_url(to_webmercator(args.input, tmp / 'image.jpg'), 'image/jpeg')
+            img = data_url(
+                to_webmercator(args.input, tmp / 'image.jpg', scale=not args.no_scale),
+                'image/jpeg')
             bounds = load(bounds_path(tmp / 'image.jpg'))
     else:
         assert fmt == 'image/jpeg'

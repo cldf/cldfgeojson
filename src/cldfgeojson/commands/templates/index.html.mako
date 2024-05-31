@@ -40,7 +40,7 @@
 <body>
 <div class="vh pure-g">
     <div class="vh pure-u-4-5">
-        <div id='map'></div>
+        <div id='map'> </div>
     </div>
     <div class="vh pure-u-1-5">
         <div id="export-container">
@@ -50,7 +50,9 @@
                 <hr>
                 <button id="delete" style="float: right;">Delete Features</button>
                 <button id="export">Export Features</button>
+                % endif
             </div>
+            % if with_draw:
             <textarea id="ex" style="height: 90%; overflow-y: scroll; width: 100%"> </textarea>
             % endif
         </div>
@@ -94,12 +96,22 @@
             document.getElementById('ex').innerText = JSON.stringify(drawnItems.toGeoJSON());
         }
     }
+
+    function onEachFeature(f, l) {
+        var html = '<table class="pure-table pure-table-striped"><tbody>';
+        if (f.properties) {
+            for (const name in f.properties) {
+                html += '<tr><td>' + name + '</td><td>' + f.properties[name] + '</td></tr>'
+            }
+            html += '</tbody></table>'
+            l.bindPopup(html);
+        }
+    }
     for (const name in geojson) {
-        layers[name] = L.geoJSON(geojson[name]);
+        layers[name] = L.geoJSON(geojson[name], {onEachFeature: onEachFeature});
         layers[name].addTo(map)
     }
     L.control.layers({}, layers).addTo(map);
-    L.rectangle(latLngBounds).addTo(map);
     map.fitBounds(latLngBounds);
 </script>
 </body>
