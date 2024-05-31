@@ -20,7 +20,6 @@ The functionality in [`cldfgeojson.create`](src/cldfgeojson/create.py) helps add
 information when creating CLDF datasets (e.g. with [`cldfbench`](https://github.com/cldf/cldfbench)).
 
 
-
 ## `leaflet.draw`
 
 This package contains the [`leaflet.draw`](https://github.com/Leaflet/Leaflet.draw) plugin in the form of `data://` URLs in 

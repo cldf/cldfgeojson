@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [0.3.0] - 2024-05-31
 
 - Make sure we can also convert 4-band input to usable JPEG in webmercator projection.
 - Bind popups to included GeoJSON layers in leaflet output.
