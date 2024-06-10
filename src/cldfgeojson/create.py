@@ -2,10 +2,12 @@
 Functionality to create GeoJSON FeatureCollections encoding speaker area information for datasets.
 """
 import typing
+import warnings
 import collections
 
 from shapely.geometry import shape, Polygon
 from shapely import union_all
+import antimeridian
 from clldutils.color import qualitative_colors
 from pycldf import Dataset
 from pycldf.orm import Language as pycldfLanguage
@@ -18,9 +20,14 @@ except ImportError:  # pragma: no cover
 
 from . import geojson
 
-__all__ = ['feature_collection', 'fixed_geometry', 'merged_geometry', 'aggregate']
+__all__ = [
+    'feature_collection', 'fixed_geometry', 'merged_geometry', 'aggregate', 'InvalidRingWarning']
 
 Languoid = typing.Union[pyglottologLanguoid, pycldfLanguage]
+
+
+class InvalidRingWarning(UserWarning):
+    pass
 
 
 def feature_collection(features: typing.List[dict], **properties) -> dict:
@@ -30,7 +37,9 @@ def feature_collection(features: typing.List[dict], **properties) -> dict:
     return dict(type="FeatureCollection", features=features, properties=properties)
 
 
-def fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
+def fixed_geometry(feature: geojson.Feature,
+                   fix_longitude=False,
+                   fix_antimeridian=False) -> geojson.Feature:
     """
     Fixes a feature's geometry in-place.
 
@@ -47,6 +56,14 @@ def fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
     for i, poly in enumerate(polys):
         rings = []
         for ring in poly:
+            if fix_longitude:
+                coords = []
+                for lon, lat in ring:
+                    if lon > 180:
+                        lon = lon - 360
+                        invalid = True
+                    coords.append([lon, lat])
+                ring = coords
             # Some linear rings are self-intersecting. We fix these by taking the 0-distance
             # buffer around the ring instead.
             p = Polygon(ring)
@@ -54,6 +71,7 @@ def fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
                 invalid = True
                 p = p.buffer(0)
                 assert p.is_valid
+                warnings.warn('fixed invalid ring', InvalidRingWarning)
             rings.append(p.__geo_interface__['coordinates'][0])
         p = shape(dict(type='Polygon', coordinates=rings))
         assert p.is_valid
@@ -64,6 +82,13 @@ def fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
         assert multi_polygon.is_valid
     if invalid:  # Make sure we only fix what's broken!
         feature['geometry'] = multi_polygon.__geo_interface__
+    if fix_antimeridian:
+        for poly in multi_polygon.__geo_interface__['coordinates']:
+            if min(c[0] for c in poly[0]) < 0 and max(c[0] for c in poly[0]) > 0:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    feature = antimeridian.fix_geojson(feature)
+                break
     return feature
 
 
