@@ -1,3 +1,4 @@
+import pytest
 from shapely.geometry import shape, Point
 
 from cldfgeojson.create import *
@@ -5,6 +6,24 @@ from cldfgeojson.create import *
 
 def test_feature_collection():
     assert 'type' in feature_collection([])
+
+
+@pytest.mark.parametrize(
+    'in_,out_',
+    [
+        (0, 0),
+        (1, 1),
+        (-1, -1),
+        (180, 180),
+        (-180, -180),
+        (181, -179),
+        (540, 180),
+        (-900, 180),
+        (-181, 179),
+    ]
+)
+def test_correct_longitude(in_, out_):
+    assert correct_longitude(in_) == out_
 
 
 def test_fixed_geometry():
@@ -72,7 +91,7 @@ def test_fixed_geometry():
                     [5, 0],
                 ]],
                 [[
-                    [10, 5],
+                    [370, 5],
                     [15, 5],
                     [15, 10],
                     [10, 10],
@@ -81,8 +100,42 @@ def test_fixed_geometry():
             ]
         }
     }
-    res = fixed_geometry(f)
+    res = fixed_geometry(f, fix_longitude=True)
     assert shape(res['geometry']).contains(Point(12, 7))
+
+    f = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [
+                        -179.70358951407547,
+                        52.750507455036264
+                    ],
+                    [
+                        179.96672360880183,
+                        52.00163609753924
+                    ],
+                    [
+                        -177.89334479610974,
+                        50.62805205289558
+                    ],
+                    [
+                        -179.9847165338706,
+                        51.002602948712465
+                    ],
+                    [
+                        -179.70358951407547,
+                        52.750507455036264
+                    ]
+                ]
+            ]
+        }
+    }
+    res = fixed_geometry(f, fix_antimeridian=True)
+    assert res['geometry']['type'] == 'MultiPolygon' and len(res['geometry']['coordinates']) == 2
 
 
 def test_aggregate(glottolog_cldf):

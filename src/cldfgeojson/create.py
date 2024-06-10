@@ -21,7 +21,13 @@ except ImportError:  # pragma: no cover
 from . import geojson
 
 __all__ = [
-    'feature_collection', 'fixed_geometry', 'merged_geometry', 'aggregate', 'InvalidRingWarning']
+    'feature_collection',
+    'fixed_geometry',
+    'merged_geometry',
+    'aggregate',
+    'InvalidRingWarning',
+    'correct_longitude',
+]
 
 Languoid = typing.Union[pyglottologLanguoid, pycldfLanguage]
 
@@ -37,15 +43,28 @@ def feature_collection(features: typing.List[dict], **properties) -> dict:
     return dict(type="FeatureCollection", features=features, properties=properties)
 
 
+def correct_longitude(lon):
+    sign = -1 if lon < 0 else 1
+    if abs(lon) > 180:
+        lon = lon - sign * ((abs(lon) // 360) + 1) * 360
+        if lon == -180:
+            lon = 180
+    return lon
+
+
 def fixed_geometry(feature: geojson.Feature,
-                   fix_longitude=False,
-                   fix_antimeridian=False) -> geojson.Feature:
+                   fix_longitude: bool = False,
+                   fix_antimeridian: bool = False) -> geojson.Feature:
     """
     Fixes a feature's geometry in-place.
 
     Note: This may cut off parts of the supposed polygon.
 
     :param feature:
+    :param fix_longitude: Flag signaling whether to adapt longitudes such that they are between \
+    -180 and 180 deg. Longitudes outside of this interval are translated by multiples of 360 to \
+    fall inside.
+    :param fix_antimeridian:
     :return:
     """
     if feature['geometry']['type'] not in ['Polygon', 'MultiPolygon']:
@@ -59,9 +78,10 @@ def fixed_geometry(feature: geojson.Feature,
             if fix_longitude:
                 coords = []
                 for lon, lat in ring:
-                    if lon > 180:
-                        lon = lon - 360
+                    flon = correct_longitude(lon)
+                    if flon != lon:
                         invalid = True
+                        lon = flon
                     coords.append([lon, lat])
                 ring = coords
             # Some linear rings are self-intersecting. We fix these by taking the 0-distance
