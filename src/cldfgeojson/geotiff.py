@@ -57,11 +57,11 @@ def jpeg(tif: pathlib.Path, out: pathlib.Path, scale: bool = True, log=None) -> 
     """
     Convert a GeoTIFF to JPEG format.
 
-    :param tif:
-    :param out:
-    :param scale:
+    :param tif: Path to input GeoTIFF
+    :param out: Path for output JPEG
+    :param scale: See https://gdal.org/programs/gdal_translate.html#cmdoption-gdal_translate-scale
     :param log:
-    :return:
+    :return: Path of the JPEG output
     """
     cmdline = [
         ensure_cmd('gdal_translate'), '-of', 'JPEG', '--config', 'GDAL_PAM_ENABLED', 'NO']

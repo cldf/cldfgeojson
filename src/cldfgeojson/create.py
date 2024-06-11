@@ -43,7 +43,10 @@ def feature_collection(features: typing.List[dict], **properties) -> dict:
     return dict(type="FeatureCollection", features=features, properties=properties)
 
 
-def correct_longitude(lon):
+def correct_longitude(lon: typing.Union[int, float]) -> typing.Union[int, float]:
+    """
+    Coerces a geographic longitude into the -180..180 degree range.
+    """
     sign = -1 if lon < 0 else 1
     if abs(lon) > 180:
         lon = lon - sign * ((abs(lon) // 360) + 1) * 360
