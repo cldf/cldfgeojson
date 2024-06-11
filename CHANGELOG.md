@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [0.4.0] - 2024-06-11
 
 - Enhanced `fixed_geometry`, adding option to fix antimeridian issues.
 - Moved functionality to manipulate GeoTIFF files to separate module to enhance
