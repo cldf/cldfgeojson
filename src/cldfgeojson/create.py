@@ -147,6 +147,8 @@ def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
         typing.List[geojson.Feature],
         typing.List[typing.Tuple[Languoid, list, str]]]:
     """
+    Aggregate features, merging based on same language of family level Glottocode.
+
     :param shapes: Iterable of (feature ID, GeoJSON feature, Glottocode) triples.
     :param glottolog: Glottolog data can be supplied either as `pyglottolog.Glottolog` API object \
     or as glottolog-cldf `pycldf.Dataset`.

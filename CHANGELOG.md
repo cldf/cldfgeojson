@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+Added function to translate GeoJSON objects to be "pacific centered".
+
+
 ## [0.4.0] - 2024-06-11
 
 - Enhanced `fixed_geometry`, adding option to fix antimeridian issues.

@@ -14,10 +14,24 @@ pip install cldfgeojson
 ```
 
 
-## Adding speaker areas to CLDF datasets
+## Creating CLDF datasets with speaker area data in GeoJSON
 
 The functionality in [`cldfgeojson.create`](src/cldfgeojson/create.py) helps adding speaker area
 information when creating CLDF datasets (e.g. with [`cldfbench`](https://github.com/cldf/cldfbench)).
+
+
+## Manipulating geo-referenced images in GeoTIFF format
+
+The [`cldfgeojson.geotiff`](src/cldfgeojson/geotiff.py) module provides functionality related to
+images in [GeoTIFF](https://en.wikipedia.org/wiki/GeoTIFF) format.
+
+
+## Commandline interface
+
+`cldfgeojson` also provides [`cldfbench` sub-commands](https://github.com/cldf/cldfbench?tab=readme-ov-file#commands):
+
+- [`geojson.webmercator`](src/cldfgeojson/commands/webmercator.py)
+- [`geojson.overlay`](src/cldfgeojson/commands/overlay.py)
 
 
 ## `leaflet.draw`
