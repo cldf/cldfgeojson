@@ -20,6 +20,33 @@ The functionality in [`cldfgeojson.create`](src/cldfgeojson/create.py) helps add
 information when creating CLDF datasets (e.g. with [`cldfbench`](https://github.com/cldf/cldfbench)).
 
 
+## Working around [Antimeridian problems](https://antimeridian.readthedocs.io/en/stable/)
+
+Tools like `shapely` allow doing geometry with shapes derived from GeoJSON, e.g. computing
+intersections or centroids. But `shapely` considers coordinates to be in the cartesian plane rather
+than on the surface of the earth. While this works generally well enough close to the equator, it
+fails for geometries crossing the antimeridian. To prepare GeoJSON objects for investigation with
+`shapely`, we provide a function that "moves" objects on a - somewhat linguistically informed -
+pacific-centered cartesian plane: longitudes less than 26°W are adapted by adding 360°, basically
+moving the interval of valid longitudes from -180°..180° to -26°..334°. While this just moves the
+antimeridian problems to 26°W, it's still useful because most spatial data about languages does not
+cross 26°W - which cannot be said for 180°E because this longitude is crosssed by the speaker area
+of the Austronesian family.
+
+```python
+>>> from cldfgeojson.geojson import pacific_centered
+>>> from shapely.geometry import shape
+>>> p1 = shape({"type": "Point", "coordinates": [179, 0]})
+>>> p2 = shape({"type": "Point", "coordinates": [-179, 0]})
+>>> p1.distance(p2)
+358.0
+>>> p1 = shape(pacific_centered({"type": "Point", "coordinates": [179, 0]}))
+>>> p2 = shape(pacific_centered({"type": "Point", "coordinates": [-179, 0]}))
+>>> p1.distance(p2)
+2.0
+```
+
+
 ## Manipulating geo-referenced images in GeoTIFF format
 
 The [`cldfgeojson.geotiff`](src/cldfgeojson/geotiff.py) module provides functionality related to

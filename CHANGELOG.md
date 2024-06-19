@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [1.0.0] - 2024-06-19
 
 Added function to translate GeoJSON objects to be "pacific centered".
 
