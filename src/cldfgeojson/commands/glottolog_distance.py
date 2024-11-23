@@ -2,6 +2,10 @@
 Compute the distance between speaker areas in a CLDF dataset and corresponding Glottolog point
 coordinate.
 
+Distances are given in "grid units", i.e. - since input is given as WGS 84 coordinates - in degrees
+Thus, near the equator, a distance of 1 would equal roughly 111km, while further away from the
+equator it will be less.
+
 To get an overview of Glottolog distances for a dataset you may pipe the output to the csvstat
 tool:
 
