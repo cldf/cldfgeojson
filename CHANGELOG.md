@@ -1,6 +1,6 @@
 # Changes
 
-## unreleased
+## [1.1.0] - 2024-11-23
 
 - Dropped support for python 3.8, added support for python 3.13.
 - Added command to compute distances between areas and Glottolog point coordinates.
