@@ -1,5 +1,12 @@
 # Changes
 
+## unreleased
+
+- Dropped support for python 3.8, added support for python 3.13.
+- Added command to compute distances between areas and Glottolog point coordinates.
+- Added functions to write more compact GeoJSON by limiting float precision to 5 decimal places.
+
+
 ## [1.0.0] - 2024-06-19
 
 Added function to translate GeoJSON objects to be "pacific centered".

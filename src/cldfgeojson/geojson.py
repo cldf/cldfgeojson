@@ -1,6 +1,10 @@
+import json
 import typing
+import collections
 
-__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered']
+from clldutils import jsonlib
+
+__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered', 'dump', 'dumps']
 
 # See https://datatracker.ietf.org/doc/html/rfc7946#section-12
 MEDIA_TYPE = 'application/geo+json'
@@ -80,3 +84,53 @@ def pacific_centered(obj: typing.Union[Geometry, Feature]) -> typing.Union[Geome
             fix_position(pos) for pos in line] for line in poly] for poly in geom['coordinates']]
 
     return obj
+
+
+#
+# To make GeoJSON as small as possible, we provide functionality to write GeoJSON with coordinates
+# limited to 5 decimal places, corresponding to a precision of ~1m.
+#
+class FloatWrapper:
+    """
+    In order to use the extension mechanism of Python's json.JSONEncode, we have to wrap floats in
+    an "unknown" type.
+    """
+    def __init__(self, value):
+        self.value = value
+
+
+def wrap_floats(obj, in_coordinates=False):
+    """
+    Turns a GeoJSON object into one with all coordinates wrapped in FloatWrapper instances.
+
+    :param obj:
+    :param in_coordinates:
+    :return:
+    """
+    if isinstance(obj, (list, tuple)):
+        return [wrap_floats(item, in_coordinates=in_coordinates) for item in obj]
+    if isinstance(obj, dict):
+        # Detect whether we are in the "coordinates" array of a GeoJSON object.
+        return collections.OrderedDict(
+            (k, wrap_floats(v, in_coordinates=True if k == 'coordinates' else in_coordinates))
+            for k, v in obj.items())
+    if isinstance(obj, float) and in_coordinates:
+        return FloatWrapper(obj)
+    return obj
+
+
+class MeterPrecisionFloatEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, FloatWrapper):
+            return round(obj.value, 5)
+        return super().default(obj)
+
+
+def dump(obj, *args, **kw):
+    kw['cls'] = MeterPrecisionFloatEncoder
+    return jsonlib.dump(wrap_floats(obj), *args, **kw)
+
+
+def dumps(obj, **kw):
+    kw['cls'] = MeterPrecisionFloatEncoder
+    return json.dumps(wrap_floats(obj), **kw)

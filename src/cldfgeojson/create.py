@@ -127,11 +127,18 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
     Specify `None` to add no buffer.
     :return: The resulting Geometry object representing the merged shapes.
     """
+    features = list(features)
+
+    if len(features) == 1:
+        f = features[0]
+        return f.get('geometry', f)
+
     def get_shape(f):
         s = shape(f.get('geometry', f))
         if buffer:
             s = s.buffer(buffer)
         return s
+
     res = union_all([get_shape(f) for f in features])
     if buffer:
         res = res.buffer(-buffer)

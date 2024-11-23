@@ -26,7 +26,7 @@ def test_correct_longitude(in_, out_):
     assert correct_longitude(in_) == out_
 
 
-def test_fixed_geometry():
+def test_fixed_geometry(recwarn):
     f = {
         "type": "Feature",
         "properties": {},

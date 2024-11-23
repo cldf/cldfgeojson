@@ -1,6 +1,15 @@
 from cldfbench.__main__ import main
 
 
+def test_glottolog_distance(fixtures_dir, capsys):
+    main([
+        'geojson.glottolog_distance',
+        str(fixtures_dir / 'dataset'),
+        '--glottolog', str(fixtures_dir / 'glottolog')])
+    out, _ = capsys.readouterr()
+    assert 'curr1243' in out
+
+
 def test_webmercator(fixtures_dir, tmp_path):
     o = tmp_path / 'web.tif'
     main(['geojson.webmercator', str(fixtures_dir / 'geo.tif'), str(o)])
