@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+- Added command to validate speaker area geometries.
+- Added function to repair geometries using `shapely.make_valid`.
+
+
 ## [1.1.0] - 2024-11-23
 
 - Dropped support for python 3.8, added support for python 3.13.

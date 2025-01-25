@@ -1,13 +1,19 @@
 from cldfbench.__main__ import main
 
 
+def test_validate(fixtures_dir, capsys):
+    main(['geojson.validate', str(fixtures_dir / 'dataset')])
+    out, _ = capsys.readouterr()
+    assert 'bare1276' in out
+
+
 def test_glottolog_distance(fixtures_dir, capsys):
     main([
         'geojson.glottolog_distance',
         str(fixtures_dir / 'dataset'),
         '--glottolog', str(fixtures_dir / 'glottolog')])
     out, _ = capsys.readouterr()
-    assert 'curr1243' in out
+    assert 'mand1448' in out
 
 
 def test_webmercator(fixtures_dir, tmp_path):

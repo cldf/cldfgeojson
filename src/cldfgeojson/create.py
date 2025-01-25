@@ -5,12 +5,14 @@ import typing
 import warnings
 import collections
 
-from shapely.geometry import shape, Polygon
-from shapely import union_all
+from shapely.geometry import (
+    shape, Polygon, MultiPolygon, GeometryCollection, LineString, MultiLineString)
+from shapely import union_all, make_valid
 import antimeridian
 from clldutils.color import qualitative_colors
 from pycldf import Dataset
 from pycldf.orm import Language as pycldfLanguage
+
 try:  # pragma: no cover
     from pyglottolog import Glottolog
     from pyglottolog.languoids import Languoid as pyglottologLanguoid
@@ -23,6 +25,7 @@ from . import geojson
 __all__ = [
     'feature_collection',
     'fixed_geometry',
+    'shapely_fixed_geometry',
     'merged_geometry',
     'aggregate',
     'InvalidRingWarning',
@@ -53,6 +56,25 @@ def correct_longitude(lon: typing.Union[int, float]) -> typing.Union[int, float]
         if lon == -180:
             lon = 180
     return lon
+
+
+def shapely_fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
+    shp = shape(feature['geometry'])
+    if not shp.is_valid:
+        valid = make_valid(shp)
+        if isinstance(valid, (Polygon, MultiPolygon)):
+            pass
+        elif isinstance(valid, GeometryCollection):
+            assert isinstance(valid.geoms[0], (Polygon, MultiPolygon))
+            assert all(
+                isinstance(s, (LineString, MultiLineString))
+                for i, s in enumerate(valid.geoms) if i > 0)
+            valid = valid.geoms[0]
+        else:
+            raise ValueError('Cannot make sense of return value of make_valid')  # pragma: no cover
+        feature['geometry'] = valid.__geo_interface__
+        assert shape(feature['geometry']).is_valid
+    return feature
 
 
 def fixed_geometry(feature: geojson.Feature,
@@ -142,6 +164,7 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
     res = union_all([get_shape(f) for f in features])
     if buffer:
         res = res.buffer(-buffer)
+    assert res.is_valid
     return res.__geo_interface__
 
 

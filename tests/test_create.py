@@ -53,6 +53,7 @@ def test_fixed_geometry(recwarn):
     assert not shape(f['geometry']).contains(Point(0, 0))
     res = fixed_geometry(f)
     assert not shape(res['geometry']).contains(Point(0, 0))
+    assert shapely_fixed_geometry(f)
 
     f = {
         "type": "Feature",
@@ -74,6 +75,7 @@ def test_fixed_geometry(recwarn):
     assert res['geometry']['type'] == 'MultiPolygon'
     assert shape(res['geometry']).contains(Point(-2, 2))
     assert not shape(res['geometry']).contains(Point(2, 2))
+    assert shapely_fixed_geometry(f)
 
     f = {
         "type": "Feature",
@@ -102,6 +104,7 @@ def test_fixed_geometry(recwarn):
     }
     res = fixed_geometry(f, fix_longitude=True)
     assert shape(res['geometry']).contains(Point(12, 7))
+    assert shapely_fixed_geometry(f)
 
     f = {
         "type": "Feature",
@@ -136,6 +139,7 @@ def test_fixed_geometry(recwarn):
     }
     res = fixed_geometry(f, fix_antimeridian=True)
     assert res['geometry']['type'] == 'MultiPolygon' and len(res['geometry']['coordinates']) == 2
+    assert shapely_fixed_geometry(f)
 
 
 def test_aggregate(glottolog_cldf):
