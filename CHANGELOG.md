@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [1.2.0] - 2025-01-25
 
 - Added command to validate speaker area geometries.
 - Added function to repair geometries using `shapely.make_valid`.
