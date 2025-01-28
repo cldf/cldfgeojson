@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [1.3.0] - 2025-01-28
 
 - Added command to compute multi-polygon spread for speaker areas of language-level items in the
   LanguageTable of a CLDF dataset.
