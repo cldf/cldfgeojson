@@ -7,6 +7,15 @@ def test_validate(fixtures_dir, capsys):
     assert 'bare1276' in out
 
 
+def test_multipolygon_spread(fixtures_dir, capsys):
+    main([
+        'geojson.multipolygon_spread',
+        str(fixtures_dir / 'dataset'),
+        '--threshold', '0'])
+    out, _ = capsys.readouterr()
+    assert 'bare1276' in out
+
+
 def test_glottolog_distance(fixtures_dir, capsys):
     main([
         'geojson.glottolog_distance',

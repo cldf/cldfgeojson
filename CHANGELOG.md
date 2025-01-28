@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+- Added command to compute multi-polygon spread for speaker areas of language-level items in the
+  LanguageTable of a CLDF dataset.
+
+
 ## [1.2.0] - 2025-01-25
 
 - Added command to validate speaker area geometries.

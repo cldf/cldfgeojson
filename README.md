@@ -59,6 +59,7 @@ images in [GeoTIFF](https://en.wikipedia.org/wiki/GeoTIFF) format.
 
 - [`geojson.validate`](src/cldfgeojson/commands/validate.py)
 - [`geojson.glottolog_distance`](src/cldfgeojson/commands/glottolog_distance.py)
+- [`geojson.multipolygon_spread`](src/cldfgeojson/commands/glottolog_distance.py)
 - [`geojson.webmercator`](src/cldfgeojson/commands/webmercator.py)
 - [`geojson.overlay`](src/cldfgeojson/commands/overlay.py)
 
