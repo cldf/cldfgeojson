@@ -7,6 +7,19 @@ def test_validate(fixtures_dir, capsys):
     assert 'bare1276' in out
 
 
+def test_geojson(fixtures_dir, capsys):
+    main(['--no-config', 'geojson.geojson', str(fixtures_dir / 'dataset'), 'bare1276', '--glottolog', '-'])
+    out, _ = capsys.readouterr()
+    assert 'FeatureCollection' in out
+
+    main([
+        'geojson.geojson',
+        str(fixtures_dir / 'dataset'),
+        '--glottolog', str(fixtures_dir / 'glottolog'), 'mand1448'])
+    out, _ = capsys.readouterr()
+    assert 'Point' in out
+
+
 def test_multipolygon_spread(fixtures_dir, capsys):
     main([
         'geojson.multipolygon_spread',

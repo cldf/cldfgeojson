@@ -33,7 +33,7 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds, fix_geometry=True)
+    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)
     gl_coords = {
         lg.id: Point(float(lg.longitude), float(lg.latitude))
         for lg in args.glottolog.api.languoids() if lg.longitude}
@@ -42,9 +42,10 @@ def run(args):
         for i, lg in tqdm(enumerate(ds.objects('LanguageTable'), start=1)):
             if lg.cldf.glottocode in gl_coords:
                 if lg.cldf.speakerArea in geojsons:
-                    shp = geojsons[lg.cldf.speakerArea][lg.cldf.id]
+                    shp, props = geojsons[lg.cldf.speakerArea][lg.cldf.id]
                 elif lg.cldf.speakerArea:  # pragma: no cover
-                    shp = shape(lg.speaker_area_as_geojson_feature['geometry'])
+                    feature = lg.speaker_area_as_geojson_feature
+                    shp = shape(feature['geometry'])
                 else:
                     continue
 

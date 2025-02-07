@@ -9,7 +9,8 @@ from cldfgeojson.create import shapely_fixed_geometry
 
 
 def speaker_area_shapes(ds: Dataset,
-                        fix_geometry: bool = False) -> typing.Dict[str, typing.Dict[str, shape]]:
+                        fix_geometry: bool = False,
+                        with_properties: bool = False) -> typing.Dict[str, typing.Dict[str, shape]]:
     """
     Read all speaker areas from GeoJSON files provided with a dataset.
 
@@ -30,5 +31,8 @@ def speaker_area_shapes(ds: Dataset,
                                 else f['properties']['cldf:languageReference']:
                             if fix_geometry:
                                 f = shapely_fixed_geometry(f)
-                            geojsons[media.id][lid] = shape(f['geometry'])
+                            if with_properties:
+                                geojsons[media.id][lid] = (shape(f['geometry']), f['properties'])
+                            else:
+                                geojsons[media.id][lid] = shape(f['geometry'])
     return geojsons
