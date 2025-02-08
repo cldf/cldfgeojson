@@ -7,7 +7,7 @@ import collections
 
 from shapely.geometry import (
     shape, Polygon, MultiPolygon, GeometryCollection, LineString, MultiLineString)
-from shapely import union_all, make_valid
+from shapely import union_all, make_valid, simplify
 import antimeridian
 from clldutils.color import qualitative_colors
 from pycldf import Dataset
@@ -25,6 +25,7 @@ from . import geojson
 __all__ = [
     'feature_collection',
     'fixed_geometry',
+    'shapely_simplified_geometry',
     'shapely_fixed_geometry',
     'merged_geometry',
     'aggregate',
@@ -56,6 +57,17 @@ def correct_longitude(lon: typing.Union[int, float]) -> typing.Union[int, float]
         if lon == -180:
             lon = 180
     return lon
+
+
+def shapely_simplified_geometry(feature: geojson.Feature,
+                                tolerance: float = 0.001) -> geojson.Feature:
+    """
+    With the default tolerance of 0.001, typical geo features with detailed coastlines will be
+    reduced (in terms of GeoJSON size) by a factor of 10.
+    """
+    feature['geometry'] = simplify(
+        shape(feature['geometry']), tolerance=tolerance).__geo_interface__
+    return feature
 
 
 def shapely_fixed_geometry(feature: geojson.Feature) -> geojson.Feature:

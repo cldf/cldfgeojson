@@ -1,5 +1,8 @@
+import json
+
 import pytest
 from shapely.geometry import shape, Point
+from clldutils.jsonlib import load
 
 from cldfgeojson.create import *
 
@@ -193,3 +196,19 @@ def test_aggregate(glottolog_cldf):
     assert len(pids) == 3
     # Make sure a point from the sub-group polygon is in the merged feature:
     assert shape(feature['geometry']).contains(Point(-87, 33))
+
+
+@pytest.mark.parametrize(
+    'tolerance,reduction',
+    [
+        (0.1, 50),
+        (0.01, 40),
+        (0.001, 10),  # the default
+        (0.0001, 1.1),
+    ]
+)
+def test_shapely_simplified_geometry(fixtures_dir, tolerance, reduction):
+    f = load(fixtures_dir / 'irish.geojson')
+    size = len(json.dumps(f))
+    shapely_simplified_geometry(f, tolerance=tolerance)
+    assert size / (2 * reduction) < len(json.dumps(f)) < size / reduction

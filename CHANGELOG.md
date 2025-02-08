@@ -4,6 +4,8 @@
 
 - Added command to write selected speaker areas from a dataset to GeoJSON, optionally including
   corresponding Glottolog point coordinates.
+- Added function to simplify the geometry of a feature (in order to reduce the size of the resulting
+  GeoJSON).
 
 
 ## [1.3.0] - 2025-01-28
