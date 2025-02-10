@@ -1,6 +1,6 @@
 # Changes
 
-## unreleased
+## [1.4.0] - 2025-02-10
 
 - Added command to write selected speaker areas from a dataset to GeoJSON, optionally including
   corresponding Glottolog point coordinates.
