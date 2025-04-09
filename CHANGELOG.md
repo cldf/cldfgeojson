@@ -1,5 +1,11 @@
 # Changes
 
+
+## Unreleased
+
+Added a command to compare speaker areas for the same languages from two CLDF datasets.
+
+
 ## [1.4.0] - 2025-02-10
 
 - Added command to write selected speaker areas from a dataset to GeoJSON, optionally including

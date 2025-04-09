@@ -19,6 +19,25 @@ def test_geojson(fixtures_dir, capsys):
     out, _ = capsys.readouterr()
     assert 'Point' in out
 
+    main([
+        'geojson.geojson',
+        str(fixtures_dir / 'dataset'),
+        '--dataset2', str(fixtures_dir / 'dataset'),
+        '--no-glottolog',
+        'abcd1236'])
+    out, _ = capsys.readouterr()
+    assert 'Point' not in out
+
+
+def test_compare(fixtures_dir, capsys):
+    main([
+        'geojson.compare',
+        str(fixtures_dir / 'dataset'),
+        str(fixtures_dir / 'dataset'),
+    ])
+    out, _ = capsys.readouterr()
+    assert 'abcd1236' in out
+
 
 def test_multipolygon_spread(fixtures_dir, capsys):
     main([
