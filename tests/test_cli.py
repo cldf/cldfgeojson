@@ -23,6 +23,7 @@ def test_geojson(fixtures_dir, capsys):
         'geojson.geojson',
         str(fixtures_dir / 'dataset'),
         '--dataset2', str(fixtures_dir / 'dataset'),
+        '--glottolog', str(fixtures_dir / 'glottolog'),
         '--no-glottolog',
         'abcd1236'])
     out, _ = capsys.readouterr()
