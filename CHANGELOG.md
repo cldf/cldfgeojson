@@ -1,7 +1,7 @@
 # Changes
 
 
-## Unreleased
+## [1.5.0] - 2025-04-09
 
 Added a command to compare speaker areas for the same languages from two CLDF datasets.
 
