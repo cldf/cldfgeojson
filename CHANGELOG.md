@@ -1,7 +1,7 @@
 # Changes
 
 
-## Unreleased
+## [1.5.1] - 2025-04-11
 
 Fixed bug in `compare` command whereby an incorrect GeoJSON feature for a language might have been
 selected from the second dataset.
