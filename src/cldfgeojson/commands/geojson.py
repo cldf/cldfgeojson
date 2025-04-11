@@ -66,12 +66,13 @@ def run(args):
         gl = {}
     if ds2:
         lid2gc = {
-            lg.id: lg.cldf.glottocode for lg in ds2.objects('LanguageTable') if lg.cldf.glottocode}
+            lg.id: (lg.cldf.speakerArea, lg.cldf.glottocode)
+            for lg in ds2.objects('LanguageTable') if lg.cldf.glottocode}
         geojsons2 = {}
-        for d in speaker_area_shapes(ds2, fix_geometry=True, with_properties=True).values():
+        for fid, d in speaker_area_shapes(ds2, fix_geometry=True, with_properties=True).items():
             for lid, v in d.items():
-                if lid in lid2gc:
-                    geojsons2[lid2gc[lid]] = v
+                if lid in lid2gc and fid == lid2gc[lid][0]:
+                    geojsons2[lid2gc[lid][1]] = v
 
     features = []
     for lg in ds.objects('LanguageTable'):

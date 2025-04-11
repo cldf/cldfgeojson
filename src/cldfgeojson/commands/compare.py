@@ -5,8 +5,8 @@ Distances are given in "grid units", i.e. - since input is given as WGS 84 coord
 Thus, near the equator, a distance of 1 would equal roughly 111km, while further away from the
 equator it will be less.
 
-We also compute absolute and relative differences in number of polygons in the geometries and
-relative difference in area size.
+We also compute difference in number of polygons and ratios of number of polygons and areas between
+two corresponding shapes.
 
 cldfbench geojson.compare path/to/cldf1 path/to/cldf2 --format tsv | csvstat -t
 
@@ -77,7 +77,7 @@ def run(args):
 
     with Table(
             args,
-            'Glottocode', 'Distance', 'NPolys_AbsDiff', 'NPolys_RelDiff', 'Area_RelDiff'
+            'Glottocode', 'Distance', 'NPolys_Diff', 'NPolys_Ratio', 'Area_Ratio'
     ) as t:
         for i, gc in tqdm(enumerate(sorted(shared), start=1)):
             feature1 = features1[gc]
@@ -95,5 +95,5 @@ def run(args):
                 gc,
                 dist,
                 npolys2 - npolys1,
-                (npolys2 - npolys1) / npolys1,
-                (shp2.area - shp1.area) / shp1.area))
+                npolys2 / npolys1,
+                shp2.area / shp1.area))
