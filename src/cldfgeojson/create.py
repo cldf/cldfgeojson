@@ -6,7 +6,7 @@ import warnings
 import collections
 
 from shapely.geometry import (
-    shape, Polygon, MultiPolygon, GeometryCollection, LineString, MultiLineString)
+    shape, Polygon, MultiPolygon, GeometryCollection, LineString, MultiLineString, MultiPoint)
 from shapely import union_all, make_valid, simplify
 import antimeridian
 from clldutils.color import qualitative_colors
@@ -79,8 +79,8 @@ def shapely_fixed_geometry(feature: geojson.Feature) -> geojson.Feature:
         elif isinstance(valid, GeometryCollection):
             assert isinstance(valid.geoms[0], (Polygon, MultiPolygon))
             assert all(
-                isinstance(s, (LineString, MultiLineString))
-                for i, s in enumerate(valid.geoms) if i > 0)
+                isinstance(s, (LineString, MultiLineString, MultiPoint))
+                for i, s in enumerate(valid.geoms) if i > 0), [type(g) for g in valid.geoms]
             valid = valid.geoms[0]
         else:
             raise ValueError('Cannot make sense of return value of make_valid')  # pragma: no cover
