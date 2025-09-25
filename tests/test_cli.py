@@ -42,6 +42,7 @@ def test_compare(fixtures_dir, capsys):
 
 def test_multipolygon_spread(fixtures_dir, capsys):
     main([
+        '--no-config',
         'geojson.multipolygon_spread',
         str(fixtures_dir / 'dataset'),
         '--threshold', '0'])
