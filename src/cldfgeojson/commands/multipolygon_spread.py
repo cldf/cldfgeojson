@@ -12,7 +12,7 @@ import statistics
 
 from shapely.geometry import shape, Polygon, MultiPolygon
 from clldutils.clilib import Table, add_format
-from pycldf.cli_util import add_dataset, get_dataset
+from pycldf.cli_util import add_dataset, get_dataset, add_catalog_spec
 
 from cldfgeojson.util import speaker_area_shapes
 
@@ -29,6 +29,7 @@ def spread(shp) -> typing.Tuple[float, typing.List[Polygon]]:
 
 def register(parser):
     add_dataset(parser)
+    add_catalog_spec(parser, 'glottolog')
     add_format(parser, default='simple')
     parser.add_argument('--threshold', type=float, default=1.0)
 
@@ -37,9 +38,15 @@ def run(args):
     ds = get_dataset(args)
     geojsons = speaker_area_shapes(ds, fix_geometry=True)
 
-    with Table(args, 'ID', 'Spread', 'NPolys') as t:
+    glangs = set()
+    if ('LanguageTable', 'Glottolog_Languoid_Level') not in ds:
+        assert args.glottolog
+        glangs = {lg.id for lg in args.glottolog.api.languoids() if lg.level.name == 'language'}
+
+    with (Table(args, 'ID', 'Spread', 'NPolys') as t):
         for lg in ds.objects('LanguageTable'):
-            if lg.data['Glottolog_Languoid_Level'] == 'language':
+            if lg.cldf.glottocode in glangs or \
+                    (lg.data.get('Glottolog_Languoid_Level') == 'language'):
                 if lg.cldf.speakerArea in geojsons:
                     shp = geojsons[lg.cldf.speakerArea][lg.cldf.id]
                 elif lg.cldf.speakerArea:  # pragma: no cover

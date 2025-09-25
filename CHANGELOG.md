@@ -3,7 +3,9 @@
 
 ## unreleased
 
-It turns out that fixing polygons may also create artefacts of type `MultiPoint`.
+- It turns out that fixing polygons may also create artefacts of type `MultiPoint`.
+- Fixed problem where `geojson.multipolygon_spread` relied on a `Glottolog_Languoid_Level` column
+  being present.
 
 
 ## [1.5.1] - 2025-04-11
