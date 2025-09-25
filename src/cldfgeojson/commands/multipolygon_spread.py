@@ -31,6 +31,7 @@ def register(parser):
     add_dataset(parser)
     add_catalog_spec(parser, 'glottolog')
     add_format(parser, default='simple')
+    parser.add_argument('--no-catalogs', default=False, action='store_true')
     parser.add_argument('--threshold', type=float, default=1.0)
 
 
