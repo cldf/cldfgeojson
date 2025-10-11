@@ -227,18 +227,18 @@ def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
         else:
             lang2fam[glang.id] = glang.id
 
-    def is_language(glang):
-        return glang.data['Level'] == 'language' \
-            if from_glottolog_cldf else glang.level == glottolog.languoid_levels.language
+    def has_level(glang):
+        return glang.data['Level'] == level \
+            if from_glottolog_cldf else glang.level == getattr(glottolog.languoid_levels, level)
 
-    language_level_glottocodes = {gc for gc, glang in glangs.items() if is_language(glang)}
+    level_glottocodes = {gc for gc, glang in glangs.items() if has_level(glang)}
     colors = dict(zip(
         [k for k, v in collections.Counter(lang2fam.values()).most_common()],
         qualitative_colors(len(lang2fam.values()))))
 
     languoids, features = [], []
-    for gc in sorted(language_level_glottocodes.intersection(polys_by_code)
-                     if level == 'language' else sorted(set(lang2fam.values()))):
+    for gc in sorted(level_glottocodes.intersection(polys_by_code)
+                     if level != 'family' else sorted(set(lang2fam.values()))):
         languoids.append((
             glangs[gc],
             [p[0] for p in polys_by_code[gc]],
