@@ -1,7 +1,7 @@
 # Changes
 
 
-## unreleased
+## [1.6.0] - 2025-10-12
 
 - Support aggregation on Glottolog dialect level as well.
 - It turns out that fixing polygons may also create artefacts of type `MultiPoint`.
