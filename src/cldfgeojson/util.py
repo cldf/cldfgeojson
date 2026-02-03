@@ -5,8 +5,7 @@ from pycldf import Dataset
 from pycldf.media import MediaTable
 
 from cldfgeojson.geojson import MEDIA_TYPE
-from cldfgeojson.create import shapely_fixed_geometry
-
+from cldfgeojson.geometry import fixed_geometry
 
 def speaker_area_shapes(ds: Dataset,
                         fix_geometry: bool = False,
@@ -23,6 +22,9 @@ def speaker_area_shapes(ds: Dataset,
         if media.mimetype == MEDIA_TYPE:
             geojson = media.read_json()
             if 'features' in geojson:
+                #
+                # FIXME: do validity check right here!
+                #
                 geojsons[media.id] = {}
                 for f in geojson['features']:
                     if f['properties'].get('cldf:languageReference'):
@@ -30,7 +32,7 @@ def speaker_area_shapes(ds: Dataset,
                                 if isinstance(f['properties']['cldf:languageReference'], str) \
                                 else f['properties']['cldf:languageReference']:
                             if fix_geometry:
-                                f = shapely_fixed_geometry(f)
+                                f = fixed_geometry(f)
                             if with_properties:
                                 geojsons[media.id][lid] = (shape(f['geometry']), f['properties'])
                             else:

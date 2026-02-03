@@ -26,7 +26,7 @@ from pycldf.ext import discovery
 from tqdm import tqdm
 
 from cldfgeojson.geojson import MEDIA_TYPE
-from cldfgeojson.create import shapely_fixed_geometry
+from cldfgeojson.geometry import fixed_geometry
 
 
 def register(parser):
@@ -55,7 +55,7 @@ def features_by_glottocode(ds, langs):
             geojson = {
                 f['properties']['cldf:languageReference']: f for f in media.read_json()['features']}
             for lid, gc in speaker_areas[media.id].items():
-                features[gc] = shapely_fixed_geometry(geojson[lid])
+                features[gc] = fixed_geometry(geojson[lid])
     return features
 
 

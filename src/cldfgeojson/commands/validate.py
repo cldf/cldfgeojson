@@ -9,11 +9,10 @@ giving the reason for the invalidity as well as an indication of whether it can 
 """
 from clldutils.clilib import Table, add_format
 from shapely.geometry import shape
-from shapely import is_valid_reason
 from pycldf.cli_util import add_dataset, get_dataset
 
 from cldfgeojson.util import speaker_area_shapes
-from cldfgeojson.create import shapely_fixed_geometry
+from cldfgeojson.geometry import ShapelyChecker, SpherelyChecker, Status
 
 
 def register(parser):
@@ -33,14 +32,16 @@ def run(args):
             shp = shape(lg.speaker_area_as_geojson_feature['geometry'])
         else:
             continue
-        if not shp.is_valid:
-            try:
-                shapely_fixed_geometry(dict(type='Feature', geometry=shp.__geo_interface__))
-                fixable = True
-            except:  # pragma: no cover # noqa: E722
-                fixable = False
 
-            problems.append([lg.id, lg.cldf.glottocode, is_valid_reason(shp), fixable])
+        for checker in [ShapelyChecker, SpherelyChecker]:
+            status = Status.from_checker(checker, shp)
+            if not status.is_valid:
+                problems.append([lg.id, lg.cldf.glottocode, status.reason, status.is_fixable])
+
+    #
+    # FIXME: We should look for other polygon data as well! Loop over MediaTable, look for
+    # Media_Type 'application/geo+json'
+    #
 
     if problems:
         with Table(args, 'id', 'glottocode', 'reason', 'fixable') as t:
