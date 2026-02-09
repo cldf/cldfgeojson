@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from shapely.geometry import Point
@@ -40,6 +38,24 @@ def test_shapely_simplified_geometry(fixtures_dir, tolerance, reduction):
     size = len(json.dumps(f))
     shapely_simplified_geometry(f, tolerance=tolerance)
     assert size / (2 * reduction) < len(json.dumps(f)) < size / reduction
+
+
+def test_check_feature(tmp_path):
+    geom = shape({
+        "type": "Polygon",
+        "coordinates": [[  # A self-intersecting polygon.
+            [5, 0],
+            [-5, 0],
+            [-5, 5],
+            [0, 5],
+            [0, -5],
+            [5, -5],
+            [5, 0],
+        ]]
+    })
+    with pytest.raises(ValueError):
+        check_feature(geom, tdir=tmp_path)
+    assert tmp_path.glob('*.geojson')
 
 
 def test_fixed_geometry(recwarn):

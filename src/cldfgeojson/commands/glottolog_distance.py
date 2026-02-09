@@ -33,7 +33,7 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)
+    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)[0]
     gl_coords = {
         lg.id: Point(float(lg.longitude), float(lg.latitude))
         for lg in args.glottolog.api.languoids() if lg.longitude}

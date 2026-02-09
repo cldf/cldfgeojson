@@ -2,7 +2,11 @@
 Functionality to assess the validity of feature geometries and possibly fix invalid ones.
 """
 import json
+import pathlib
+import random
+import string
 import typing
+import tempfile
 import warnings
 import dataclasses
 
@@ -16,6 +20,21 @@ import numpy as np
 import antimeridian
 
 from cldfgeojson import geojson
+
+
+def randstring(length=6):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def check_feature(geom, feature=None, tdir=None):
+    if not all(checker.is_valid(geom)[0] for checker in [ShapelyChecker, SpherelyChecker]):
+        if feature is None:
+            feature = dict(properties=dict(id=randstring()), type='Feature')
+        feature['geometry'] = geom.__geo_interface__
+        p = pathlib.Path(tempfile.gettempdir() if tdir is None else tdir).joinpath(
+            'invalid_{}.geojson'.format(feature['properties']['id']))
+        p.write_text(json.dumps(feature, indent=2), encoding='utf8')
+        raise ValueError('Invalid feature geometry written to {}'.format(p))
 
 
 class InvalidRingWarning(UserWarning):
@@ -68,6 +87,10 @@ class ShapelyChecker:
                 pass
             elif isinstance(valid, GeometryCollection):
                 assert isinstance(valid.geoms[0], (Polygon, MultiPolygon))
+                # shapely's make_valid sometimes introduces tiny polygons. We prune these.
+                assert len([
+                    s for s in valid.geoms
+                    if isinstance(s, (Polygon, MultiPolygon)) and s.area > 1e-15]) == 1
                 assert all(
                     isinstance(s, (LineString, MultiLineString, MultiPoint))
                     for i, s in enumerate(valid.geoms) if i > 0), [type(g) for g in valid.geoms]
@@ -154,7 +177,9 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
     res = union_all([get_shape(f) for f in features])
     if buffer:
         res = res.buffer(-buffer)
-    assert res.is_valid
+    for fixer in ShapelyChecker, SpherelyChecker:
+        res = fixer.fixer(res)
+    check_feature(res)
     return res.__geo_interface__
 
 
@@ -181,7 +206,7 @@ def fixed_geometry(feature: geojson.Feature,
     fixed = False
     if fix_longitude:
         new_polys = []
-        polys = feature['geometry']['coordinates'] if feature['geometry']['type'] == 'MultiPolygon' \
+        polys = feature['geometry']['coordinates'] if feature['geometry']['type'] == 'MultiPolygon'\
             else [feature['geometry']['coordinates']]
         for i, poly in enumerate(polys):
             rings = []
@@ -198,7 +223,7 @@ def fixed_geometry(feature: geojson.Feature,
                 rings.append(ring)
             new_polys.append(rings)
     if fixed:  # Make sure we only fix what's broken!
-        new_feature = dict(
+        new_feature = geojson.Feature(
             type='Feature', geometry=dict(type='MultiPolygon', coordinates=new_polys))
     else:
         new_feature = feature
@@ -212,7 +237,7 @@ def fixed_geometry(feature: geojson.Feature,
     geom = shape(new_feature['geometry'])
     for fixer in ShapelyChecker, SpherelyChecker:
         geom = fixer.fixer(geom)
-    assert all(checker.is_valid(geom)[0] for checker in [ShapelyChecker, SpherelyChecker])
+    check_feature(geom, feature)
     feature['geometry'] = geom.__geo_interface__
     return feature
 

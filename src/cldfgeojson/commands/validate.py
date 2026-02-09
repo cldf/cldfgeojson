@@ -11,6 +11,7 @@ from clldutils.clilib import Table, add_format
 from shapely.geometry import shape
 from pycldf.cli_util import add_dataset, get_dataset
 
+from cldfgeojson import MEDIA_TYPE
 from cldfgeojson.util import speaker_area_shapes
 from cldfgeojson.geometry import ShapelyChecker, SpherelyChecker, Status
 
@@ -22,8 +23,31 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds)
+    geojsons, geojson_by_id = speaker_area_shapes(ds)
     problems = []
+
+    def iter_invalid(shp):
+        for checker in [ShapelyChecker, SpherelyChecker]:
+            status = Status.from_checker(checker, shp)
+            if not status.is_valid:
+                yield status
+
+    valid_features, valid_areas = 0, 0
+    if 'ContributionTable' in ds and ('ContributionTable', 'Type') in ds:
+        for contrib in ds.objects('ContributionTable'):
+            if contrib.data['Type'] == 'feature':
+                for mid in contrib.all_related('mediaReference'):
+                    if mid.cldf.mediaType == MEDIA_TYPE:
+                        assert contrib.id in geojson_by_id[mid.id]
+                        break
+                else:
+                    raise ValueError('Feature in ContributionTable but not in GeoJSON: {}'.format(
+                        contrib.id))
+                shp, i = shape(geojson_by_id[mid.id][contrib.id]), -1
+                for i, status in enumerate(iter_invalid(shp)):
+                    problems.append([contrib.id, 'feature', status.reason, status.is_fixable])
+                if i < 0:
+                    valid_features += 1
 
     for lg in ds.objects('LanguageTable'):
         if lg.cldf.speakerArea in geojsons:
@@ -33,16 +57,15 @@ def run(args):
         else:
             continue
 
-        for checker in [ShapelyChecker, SpherelyChecker]:
-            status = Status.from_checker(checker, shp)
-            if not status.is_valid:
-                problems.append([lg.id, lg.cldf.glottocode, status.reason, status.is_fixable])
-
-    #
-    # FIXME: We should look for other polygon data as well! Loop over MediaTable, look for
-    # Media_Type 'application/geo+json'
-    #
+        i = -1
+        for i, status in enumerate(iter_invalid(shp)):
+            problems.append([lg.id, lg.cldf.glottocode, status.reason, status.is_fixable])
+        if i < 0:
+            valid_areas += 1
 
     if problems:
         with Table(args, 'id', 'glottocode', 'reason', 'fixable') as t:
             t.extend(problems)
+    else:
+        print('{}\tvalid features\n{}\tvalid speaker areas'.format(
+            valid_features, valid_areas))

@@ -59,7 +59,7 @@ def run(args):
     else:
         ds2, geojsons2 = None, {}
 
-    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)
+    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)[0]
     if args.glottolog and not args.no_glottolog:
         gl = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.longitude}
     else:
@@ -69,7 +69,7 @@ def run(args):
             lg.id: (lg.cldf.speakerArea, lg.cldf.glottocode)
             for lg in ds2.objects('LanguageTable') if lg.cldf.glottocode}
         geojsons2 = {}
-        for fid, d in speaker_area_shapes(ds2, fix_geometry=True, with_properties=True).items():
+        for fid, d in speaker_area_shapes(ds2, fix_geometry=True, with_properties=True)[0].items():
             for lid, v in d.items():
                 if lid in lid2gc and fid == lid2gc[lid][0]:
                     geojsons2[lid2gc[lid][1]] = v

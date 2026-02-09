@@ -37,7 +37,7 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds, fix_geometry=True)
+    geojsons = speaker_area_shapes(ds, fix_geometry=True)[0]
 
     glangs = set()
     if ('LanguageTable', 'Glottolog_Languoid_Level') not in ds:
