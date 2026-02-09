@@ -15,9 +15,13 @@ from shapely import (
 from shapely.geometry import (
     shape, Polygon, MultiPolygon, GeometryCollection, LineString, MultiLineString, MultiPoint)
 from shapely.ops import unary_union
-import spherely
 import numpy as np
 import antimeridian
+
+try:
+    import spherely
+except ImportError:
+    spherely = None
 
 from cldfgeojson import geojson
 
@@ -107,6 +111,8 @@ class ShapelyChecker:
 class SpherelyChecker:
     @staticmethod
     def is_valid(shp) -> typing.Tuple[bool, str]:
+        if spherely is None:  # pragma: no cover
+            return True, ''
         try:
             spherely.from_wkt(shp.wkt)
             return True, ''
@@ -115,6 +121,8 @@ class SpherelyChecker:
 
     @staticmethod
     def fixer(shp: Geometry) -> Geometry:
+        if spherely is None:  # pragma: no cover
+            return shp
         if not ShapelyChecker.is_valid(shp)[0]:
             raise ValueError('Cannot fix (shapely) invalid geometry')
         try:
