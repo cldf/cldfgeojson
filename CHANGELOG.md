@@ -1,5 +1,15 @@
 # Changes
 
+## [2.0.0] - 2026-02-10
+
+Support validation/fixing of geometries also on the sphere (via spherely). Note that this
+functionality is limited to Python < 3.14 until a new version of spherely is released.
+This is a breaking change because now geometries regarded as valid by older `cldfgeojson` versions
+may now be flagged as invalid.
+
+Note that the computation of spread and Glottolog distance is still done via shapely, i.e. on the
+cartesian plane.
+
 
 ## [1.6.0] - 2025-10-12
 
