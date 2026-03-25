@@ -1,5 +1,12 @@
 # Changes
 
+
+## [2.0.1] - 2026-03-25
+
+Pin dependencies of packages about to get incompatible new major versions.
+This is the last version of the 2.x series.
+
+
 ## [2.0.0] - 2026-02-10
 
 Support validation/fixing of geometries also on the sphere (via spherely). Note that this
