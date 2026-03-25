@@ -22,41 +22,40 @@ from shapely.geometry import Point, shape, MultiPolygon
 from pycldf.cli_util import add_dataset, get_dataset, add_catalog_spec
 from tqdm import tqdm
 
-from cldfgeojson.util import speaker_area_shapes
+from cldfgeojson.util import speaker_area_shapes, ShapeDictType
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     add_catalog_spec(parser, 'glottolog')
     add_format(parser, 'simple')
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds, fix_geometry=True, with_properties=True)[0]
+    geojsons: ShapeDictType = speaker_area_shapes(ds, fix_geometry=True)[0]
     gl_coords = {
         lg.id: Point(float(lg.longitude), float(lg.latitude))
         for lg in args.glottolog.api.languoids() if lg.longitude}
 
     with Table(args, 'ID', 'Distance', 'Contained', 'NPolys') as t:
-        for i, lg in tqdm(enumerate(ds.objects('LanguageTable'), start=1)):
+        for lg in tqdm(ds.objects('LanguageTable')):
             if lg.cldf.glottocode in gl_coords:
                 if lg.cldf.speakerArea in geojsons:
-                    shp, props = geojsons[lg.cldf.speakerArea][lg.cldf.id]
+                    shp = geojsons[lg.cldf.speakerArea][lg.cldf.id]
                 elif lg.cldf.speakerArea:  # pragma: no cover
                     feature = lg.speaker_area_as_geojson_feature
                     shp = shape(feature['geometry'])
                 else:
                     continue
 
-                npolys = len(shp.geoms) if isinstance(shp, MultiPolygon) else 1
-                gl_coord = gl_coords[lg.cldf.glottocode]
-                if shp.contains(gl_coord):
-                    t.append((lg.id, 0, True, npolys))
-                elif shp.convex_hull.contains(gl_coord):
-                    t.append((lg.id, 0, False, npolys))  # pragma: no cover
+                if shp.contains(gl_coords[lg.cldf.glottocode]):
+                    dist, contained = 0, True
+                elif shp.convex_hull.contains(gl_coords[lg.cldf.glottocode]):
+                    dist, contained = 0, False  # pragma: no cover
                 else:
-                    dist = shp.distance(gl_coord)
+                    dist, contained = shp.distance(gl_coords[lg.cldf.glottocode]), False
                     if dist > 180:
                         dist = abs(dist - 360)  # pragma: no cover
-                    t.append((lg.id, dist, False, npolys))
+                t.append((
+                    lg.id, dist, contained, len(shp.geoms) if isinstance(shp, MultiPolygon) else 1))

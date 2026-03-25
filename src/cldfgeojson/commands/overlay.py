@@ -17,7 +17,7 @@ from mako.lookup import TemplateLookup
 from .webmercator import to_webmercator, bounds_path
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     parser.add_argument('--test', action='store_true', default=False, help=argparse.SUPPRESS)
     parser.add_argument(
         'input',
@@ -51,7 +51,7 @@ def register(parser):
     )
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     lookup = TemplateLookup(directories=[str(pathlib.Path(__file__).parent / 'templates')])
 
     fmt = mimetypes.guess_type(args.input.name)[0]

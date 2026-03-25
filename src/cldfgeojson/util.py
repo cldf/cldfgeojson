@@ -1,5 +1,6 @@
-import typing
+from typing import Any, Union
 
+from shapely import Geometry
 from shapely.geometry import shape
 from pycldf import Dataset
 from pycldf.media import MediaTable
@@ -7,12 +8,18 @@ from pycldf.media import MediaTable
 from cldfgeojson.geojson import MEDIA_TYPE
 from cldfgeojson.geometry import fixed_geometry
 
+PropDictType = dict[str, Any]
+MediaIdType = str
+LanguageIdType = str
+ShapeDictType = dict[
+    MediaIdType, dict[LanguageIdType, Union[Geometry, tuple[Geometry, PropDictType]]]]
 
-def speaker_area_shapes(ds: Dataset,
-                        fix_geometry: bool = False,
-                        with_properties: bool = False) -> typing.Tuple[
-                            typing.Dict[str, typing.Dict[str, shape]],
-                            typing.Dict[str, typing.Dict[str, shape]]]:
+
+def speaker_area_shapes(
+        ds: Dataset,
+        fix_geometry: bool = False,
+        with_properties: bool = False,
+) -> tuple[ShapeDictType, ShapeDictType]:
     """
     Read all speaker areas from GeoJSON files provided with a dataset.
 

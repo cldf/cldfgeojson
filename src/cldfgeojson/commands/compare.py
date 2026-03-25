@@ -29,7 +29,7 @@ from cldfgeojson.geojson import MEDIA_TYPE
 from cldfgeojson.geometry import fixed_geometry
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     parser.add_argument(
         'dataset2',
@@ -65,7 +65,7 @@ def langs_by_glottocode(ds):
         if lg.cldf.glottocode and lg.cldf.speakerArea}
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     ds1 = get_dataset(args)
     ds2 = discovery.get_dataset(args.dataset2, download_dir=args.download_dir)
 

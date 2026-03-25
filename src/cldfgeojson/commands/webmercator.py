@@ -22,7 +22,7 @@ def bounds_path(p):
     return p.parent / '{}.bounds.geojson'.format(p.name)
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     # -scale or not
     # -output GeoTIFF or JPEG + bounds
     parser.add_argument(
@@ -40,7 +40,7 @@ def register(parser):
     )
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     to_webmercator(args.geotiff, args.output, not args.no_scale, log=args.log)
 
 

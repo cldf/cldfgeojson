@@ -10,14 +10,14 @@ def test_validate(fixtures_dir, capsys):
 def test_geojson(fixtures_dir, capsys):
     main(['--no-config', 'geojson.geojson', str(fixtures_dir / 'dataset'), 'bare1276', '--glottolog', '-'])
     out, _ = capsys.readouterr()
-    assert 'FeatureCollection' in out
+    assert out.strip() == fixtures_dir.joinpath('bare1276.geojson').read_text(encoding='utf8').strip()
 
     main([
         'geojson.geojson',
         str(fixtures_dir / 'dataset'),
         '--glottolog', str(fixtures_dir / 'glottolog'), 'mand1448'])
     out, _ = capsys.readouterr()
-    assert 'Point' in out
+    assert out.strip() == fixtures_dir.joinpath('mand1448.geojson').read_text(encoding='utf8').strip()
 
     main([
         'geojson.geojson',
