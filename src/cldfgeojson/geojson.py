@@ -1,3 +1,6 @@
+"""
+Dealing with GeoJSON geometries (in particular of typoe Polygon and MultiPolygon).
+"""
 import json
 from typing import Any, TypedDict, Literal, Union
 import collections
@@ -30,12 +33,13 @@ class Geometry(TypedDict):
 
 
 def get_geometry(obj) -> Geometry:
+    """Convenient way to create a GeoJSON geometry object."""
     if hasattr(obj, '__geo_interface__'):
         return obj.__geo_interface__
     if isinstance(obj, dict):
         assert set(obj.keys()) == set(Geometry.__annotations__)
         return obj
-    raise TypeError(obj)
+    raise TypeError(obj)  # pragma: no cover
 
 
 class Feature(TypedDict, total=False):
@@ -50,11 +54,12 @@ class Feature(TypedDict, total=False):
 
 
 def get_feature(geometry, properties, id_=None, bbox=None) -> Feature:
+    """Convenient way to create a GeoJSON feature object."""
     res: Feature = {'type': 'Feature', 'geometry': get_geometry(geometry), 'properties': properties}
     if id_:
-        res['id'] = id_
+        res['id'] = id_  # pragma: no cover
     if bbox:
-        res['bbox'] = bbox
+        res['bbox'] = bbox  # pragma: no cover
     return res
 
 
@@ -75,7 +80,7 @@ def pacific_centered(obj: Union[Geometry, Feature]) -> Union[Geometry, Feature]:
 
     :return:
     """
-    PACIFIC_CENTERED = 154
+    PACIFIC_CENTERED = 154  # pylint: disable=C0103
 
     def fix_position(pos):
         pos = list(pos)
@@ -109,7 +114,7 @@ def pacific_centered(obj: Union[Geometry, Feature]) -> Union[Geometry, Feature]:
 # To make GeoJSON as small as possible, we provide functionality to write GeoJSON with coordinates
 # limited to 5 decimal places, corresponding to a precision of ~1m.
 #
-class FloatWrapper:
+class FloatWrapper:  # pylint: disable=R0903
     """
     In order to use the extension mechanism of Python's json.JSONEncode, we have to wrap floats in
     an "unknown" type.
@@ -139,17 +144,23 @@ def wrap_floats(obj, in_coordinates=False):
 
 
 class MeterPrecisionFloatEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, FloatWrapper):
-            return round(obj.value, 5)
-        return super().default(obj)
+    """
+    Overly precise floats can increase the size of GeoJSON files considerably.
+
+    The encoder implemented here limits the number of decimal places such that the precision of
+    geographic coordinates is limited to meters.
+    """
+    def default(self, o):  # pylint: disable=C0116
+        if isinstance(o, FloatWrapper):
+            return round(o.value, 5)
+        return super().default(o)
 
 
-def dump(obj, *args, **kw):
+def dump(obj, *args, **kw):  # pylint: disable=C0116
     kw['cls'] = MeterPrecisionFloatEncoder
     return jsonlib.dump(wrap_floats(obj), *args, **kw)
 
 
-def dumps(obj, **kw):
+def dumps(obj, **kw) -> str:  # pylint: disable=C0116
     kw['cls'] = MeterPrecisionFloatEncoder
     return json.dumps(wrap_floats(obj), **kw)

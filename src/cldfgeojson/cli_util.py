@@ -1,6 +1,7 @@
 """
 Utilities used in cldfgeojson commands.
 """
+import pathlib
 import shutil
 import logging
 import mimetypes
@@ -13,7 +14,8 @@ from cldfgeojson import geotiff
 from .util import PathType
 
 
-def bounds_path(p):
+def bounds_path(p: pathlib.Path) -> pathlib.Path:
+    """The standard name of the GeoJSON file providing the bounds of a feature collection in p."""
     return p.parent / f'{p.name}.bounds.geojson'
 
 

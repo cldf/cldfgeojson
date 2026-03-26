@@ -11,6 +11,11 @@
   flake8 src
   ```
 
+- Make sure pylint passes with a score of 10:
+  ```shell
+  pylint src/cldfgeojson
+  ```
+
 - Update the version number, by removing the trailing `.dev0` in:
   - `setup.cfg`
   - `src/cldfgeojson/__init__.py`
