@@ -4,24 +4,24 @@ Utilities to deal with geo-referenced images in GeoTIFF format.
 Functionality in this module calls rasterio's `rio` command as well as `gdal_translate`.
 """
 import json
-import pathlib
 import subprocess
 
 import rasterio
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 from clldutils.path import ensure_cmd
 
+from .util import PathType
 from .geojson import Feature
 
 
-def bounds(tif: pathlib.Path) -> Feature:
+def bounds(tif: PathType) -> Feature:
     """
     Compute the bounding box of a GeoTIFF image.
     """
     return json.loads(subprocess.check_output([ensure_cmd('rio'), 'bounds', str(tif)]))
 
 
-def webmercator(in_: pathlib.Path, out: pathlib.Path) -> pathlib.Path:
+def webmercator(in_: PathType, out: PathType) -> PathType:
     """
     Re-project a GeoTIFF image to web mercator projection.
 
@@ -53,7 +53,7 @@ def webmercator(in_: pathlib.Path, out: pathlib.Path) -> pathlib.Path:
     return out
 
 
-def jpeg(tif: pathlib.Path, out: pathlib.Path, scale: bool = True, log=None) -> pathlib.Path:
+def jpeg(tif: PathType, out: PathType, scale: bool = True, log=None) -> PathType:
     """
     Convert a GeoTIFF to JPEG format.
 

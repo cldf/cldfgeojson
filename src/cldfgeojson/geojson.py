@@ -1,19 +1,20 @@
 import json
-import typing
+from typing import Any, TypedDict, Literal, Union
 import collections
 
 from clldutils import jsonlib
 
-__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered', 'dump', 'dumps']
+__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered', 'dump', 'dumps',
+           'get_geometry', 'get_feature']
 
 # See https://datatracker.ietf.org/doc/html/rfc7946#section-12
 MEDIA_TYPE = 'application/geo+json'
 
 
-JSONObject = typing.Dict[str, typing.Any]
+JSONObject = dict[str, Any]
 
 
-class Geometry(typing.TypedDict):
+class Geometry(TypedDict):
     """
     A Geometry object represents points, curves, and surfaces in
     coordinate space.  Every Geometry object is a GeoJSON object no
@@ -28,18 +29,36 @@ class Geometry(typing.TypedDict):
     coordinates: list
 
 
-class Feature(typing.TypedDict, total=False):
+def get_geometry(obj) -> Geometry:
+    if hasattr(obj, '__geo_interface__'):
+        return obj.__geo_interface__
+    if isinstance(obj, dict):
+        assert set(obj.keys()) == set(Geometry.__annotations__)
+        return obj
+    raise TypeError(obj)
+
+
+class Feature(TypedDict, total=False):
     """
     See https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
     """
-    type: str
+    type: Literal['Feature']
     geometry: Geometry
-    properties: typing.Union[None, JSONObject]
-    id: typing.Union[str, float, int]
+    properties: Union[None, JSONObject]
+    id: Union[str, float, int]
     bbox: list
 
 
-def pacific_centered(obj: typing.Union[Geometry, Feature]) -> typing.Union[Geometry, Feature]:
+def get_feature(geometry, properties, id_=None, bbox=None) -> Feature:
+    res: Feature = {'type': 'Feature', 'geometry': get_geometry(geometry), 'properties': properties}
+    if id_:
+        res['id'] = id_
+    if bbox:
+        res['bbox'] = bbox
+    return res
+
+
+def pacific_centered(obj: Union[Geometry, Feature]) -> Union[Geometry, Feature]:
     """
     Adjust longitudes of coordinates of objects to force a pacific-centered position in place.
 

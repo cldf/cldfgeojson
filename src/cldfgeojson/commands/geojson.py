@@ -7,11 +7,9 @@ between a speaker area and the corresponding Glottolog point coordinate.
 It is also possible to add speaker areas from two CLDF datasets. To do so, use the `--dataset2`
 option and pass Glottocodes as language identifiers.
 """  # noqa: E501
-import dataclasses
 import sys
 import json
 import itertools
-from typing import Any
 
 from pycldf.cli_util import add_dataset, get_dataset, UrlOrPathType
 from pycldf.ext import discovery
@@ -19,9 +17,11 @@ from clldutils.color import qualitative_colors
 
 from cldfgeojson.util import speaker_area_shapes, ShapeDictType
 from cldfgeojson.create import feature_collection
+from cldfgeojson.geojson import get_feature
 
 
-def arg_or_stdin(s):
+def arg_or_stdin(s: str):
+    """CLI argument type that allows optionally reading from stdin."""
     if s == '-':
         return sys.stdin.read().splitlines()  # pragma: no cover
     return s
@@ -63,7 +63,7 @@ def _get_geojsons(ds2):
     return geojsons2
 
 
-def run(args):  # pylint: disable=C0116,R0912
+def run(args):  # pylint: disable=C0116,R0912,R0914
     lids = set(itertools.chain.from_iterable(
         obj if isinstance(obj, list) else [obj] for obj in args.language_ids))
     colors = dict(zip(lids, qualitative_colors(len(lids))))
@@ -79,7 +79,7 @@ def run(args):  # pylint: disable=C0116,R0912
     if args.glottolog and not args.no_glottolog:
         gl = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.longitude}
 
-    features = Features()
+    features = []
     for lg in ds.objects('LanguageTable'):
         if (ds2 is None and lg.id in lids) or (ds2 and lg.cldf.glottocode in lids):
             if lg.cldf.speakerArea in geojsons:
@@ -100,7 +100,7 @@ def run(args):  # pylint: disable=C0116,R0912
                 "fill": '#0000ff' if ds2 else colors[lg.cldf.glottocode if ds2 else lg.id],
                 "fill-opacity": 0.3 if ds2 else 0.5,
             })
-            features.add(geom, props)
+            features.append(get_feature(geom, props))
             if ds2 and lg.cldf.glottocode in geojsons2:
                 geom, props = geojsons2[lg.cldf.glottocode]
                 props.update({
@@ -109,23 +109,16 @@ def run(args):  # pylint: disable=C0116,R0912
                     "fill": "#ff0000",
                     "fill-opacity": 0.3,
                 })
-                features.add(geom, props)
+                features.append(get_feature(geom, props))
 
             if args.glottolog:
                 if lg.cldf.glottocode in gl:
                     glang = gl[lg.cldf.glottocode]
-                    features.add(
+                    features.append(get_feature(
                         {'type': 'Point', 'coordinates': [glang.longitude, glang.latitude]},
                         {
                             'title': f'{lg.id} -> {glang.id}: {glang.name}',
-                            "marker-color": colors[lg.id]})
+                            "marker-color": colors[lg.id]}))
                 else:  # pragma: no cover
                     args.log.warning('No Glottolog coordinate for language ID %s', lg.id)
     print(json.dumps(feature_collection(features), indent=2))
-
-
-class Features(list):
-    def add(self, geometry: dict[str, Any], properties: dict[str, Any]):
-        if hasattr(geometry, '__geo_interface__'):
-            geometry = geometry.__geo_interface__
-        self.append({'type': 'Feature', 'geometry': geometry, 'properties': properties})

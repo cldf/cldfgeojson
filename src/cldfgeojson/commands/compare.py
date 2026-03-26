@@ -16,16 +16,19 @@ cldfbench geojson.compare path/to/cldf1 path/to/cldf2 --format tsv | \
 sed '/^$/d' | csvcut -t -c ID,Distance | csvsort -c Distance | csvformat -E | termgraph
 """  # noqa: E501
 import collections
+import dataclasses
 
 from shapely.geometry import MultiPolygon
-from clldutils.clilib import Table, add_format
 from shapely.geometry import shape
+from clldutils.clilib import Table, add_format
+from pycldf.orm import Language
+from pycldf import Dataset as CLDFDataset
 from pycldf.cli_util import add_dataset, get_dataset, UrlOrPathType
 from pycldf.media import MediaTable
 from pycldf.ext import discovery
 from tqdm import tqdm
 
-from cldfgeojson.geojson import MEDIA_TYPE
+from cldfgeojson.geojson import MEDIA_TYPE, Feature
 from cldfgeojson.geometry import fixed_geometry
 
 
@@ -43,47 +46,53 @@ def register(parser):  # pylint: disable=C0116
     add_format(parser, 'simple')
 
 
-def features_by_glottocode(ds, langs):
-    speaker_areas = collections.defaultdict(dict)
-    for lg in langs:
-        speaker_areas[lg.cldf.speakerArea][lg.id] = lg.cldf.glottocode
+@dataclasses.dataclass
+class Dataset:
+    """A CLDF dataset and its speaker area data prepared for comparison."""
+    ds: CLDFDataset
+    languages: dict[str, Language]
+    features: dict[str, Feature] = dataclasses.field(default_factory=dict)
 
-    features = {}
-    for media in MediaTable(ds):
-        if media.id in speaker_areas:
-            assert media.mimetype == MEDIA_TYPE
-            geojson = {
-                f['properties']['cldf:languageReference']: f for f in media.read_json()['features']}
-            for lid, gc in speaker_areas[media.id].items():
-                features[gc] = fixed_geometry(geojson[lid])
-    return features
+    @classmethod
+    def from_dataset(cls, ds):
+        """Initialize with data from a CLDF dataset."""
+        return cls(
+            ds,
+            {
+                lg.cldf.glottocode: lg for lg in ds.objects('LanguageTable')
+                if lg.cldf.glottocode and lg.cldf.speakerArea})
 
+    def load_features(self, langs: set[str]):
+        """Load features associated with relevant languages."""
+        langs = [self.languages[gc] for gc in langs]
 
-def langs_by_glottocode(ds):
-    return {
-        lg.cldf.glottocode: lg for lg in ds.objects('LanguageTable')
-        if lg.cldf.glottocode and lg.cldf.speakerArea}
+        speaker_areas = collections.defaultdict(dict)
+        for lg in langs:
+            speaker_areas[lg.cldf.speakerArea][lg.id] = lg.cldf.glottocode
+
+        for media in MediaTable(self.ds):
+            if media.id in speaker_areas:
+                assert media.mimetype == MEDIA_TYPE
+                geojson = {
+                    f['properties']['cldf:languageReference']: f for f in
+                    media.read_json()['features']}
+                for lid, gc in speaker_areas[media.id].items():
+                    self.features[gc] = fixed_geometry(geojson[lid])
 
 
 def run(args):  # pylint: disable=C0116
-    ds1 = get_dataset(args)
-    ds2 = discovery.get_dataset(args.dataset2, download_dir=args.download_dir)
-
-    langs1 = langs_by_glottocode(ds1)
-    langs2 = langs_by_glottocode(ds2)
-    shared = set(langs1.keys()).intersection(set(langs2.keys()))
-    features1 = features_by_glottocode(ds1, [langs1[gc] for gc in shared])
-    features2 = features_by_glottocode(ds2, [langs2[gc] for gc in shared])
+    ds1 = Dataset.from_dataset(get_dataset(args))
+    ds2 = Dataset.from_dataset(discovery.get_dataset(args.dataset2, download_dir=args.download_dir))
+    shared = set(ds1.languages.keys()).intersection(set(ds2.languages.keys()))
+    ds1.load_features(shared)
+    ds2.load_features(shared)
 
     with Table(
-            args,
-            'Glottocode', 'Distance', 'NPolys_Diff', 'NPolys_Ratio', 'Area_Ratio'
+        args, 'Glottocode', 'Distance', 'NPolys_Diff', 'NPolys_Ratio', 'Area_Ratio'
     ) as t:
-        for i, gc in tqdm(enumerate(sorted(shared), start=1)):
-            feature1 = features1[gc]
-            shp1 = shape(feature1['geometry'])
-            feature2 = features2[gc]
-            shp2 = shape(feature2['geometry'])
+        for gc in tqdm(sorted(shared)):
+            shp1 = shape(ds1.features[gc]['geometry'])
+            shp2 = shape(ds2.features[gc]['geometry'])
 
             npolys1 = len(shp1.geoms) if isinstance(shp1, MultiPolygon) else 1
             npolys2 = len(shp2.geoms) if isinstance(shp2, MultiPolygon) else 1

@@ -14,7 +14,7 @@ from clldutils.jsonlib import load
 from clldutils.path import TemporaryDirectory
 from mako.lookup import TemplateLookup
 
-from .webmercator import to_webmercator, bounds_path
+from cldfgeojson.cli_util import to_webmercator, bounds_path
 
 
 def register(parser):  # pylint: disable=C0116

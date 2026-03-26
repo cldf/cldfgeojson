@@ -1,3 +1,4 @@
+import pathlib
 from typing import Any, Union
 
 from shapely import Geometry
@@ -8,6 +9,7 @@ from pycldf.media import MediaTable
 from cldfgeojson.geojson import MEDIA_TYPE
 from cldfgeojson.geometry import fixed_geometry
 
+PathType = Union[str, pathlib.Path]
 PropDictType = dict[str, Any]
 MediaIdType = str
 LanguageIdType = str

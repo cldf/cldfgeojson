@@ -5,9 +5,10 @@ import json
 import pathlib
 import random
 import string
-import typing
+from typing import Protocol, Optional, Union
 import tempfile
 import warnings
+from collections.abc import Iterable
 import dataclasses
 
 from shapely import (
@@ -25,29 +26,36 @@ except ImportError:
 
 from cldfgeojson import geojson
 
+PathType = Union[str, pathlib.Path]
 
-def randstring(length=6):
+
+def randstring(length: int = 6) -> str:
+    """A random string of a certain length."""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def check_feature(geom, feature=None, tdir=None):
+def check_feature(
+        geom: Geometry,
+        feature: Optional[geojson.Feature] = None,
+        tdir: Optional[PathType] = None):
+    """Check the validity of a geometry."""
     if not all(checker.is_valid(geom)[0] for checker in [ShapelyChecker, SpherelyChecker]):
         if feature is None:
-            feature = dict(properties=dict(id=randstring()), type='Feature')
-        feature['geometry'] = geom.__geo_interface__
+            feature = {'properties': {'id': randstring()}, 'type': 'Feature'}
+        feature['geometry'] = geojson.get_geometry(geom)
         p = pathlib.Path(tempfile.gettempdir() if tdir is None else tdir).joinpath(
             'invalid_{}.geojson'.format(feature['properties']['id']))
         p.write_text(json.dumps(feature, indent=2), encoding='utf8')
-        raise ValueError('Invalid feature geometry written to {}'.format(p))
+        raise ValueError(f'Invalid feature geometry written to {p}')
 
 
 class InvalidRingWarning(UserWarning):
     pass
 
 
-class ValidityChecker(typing.Protocol):
+class ValidityChecker(Protocol):
     @staticmethod
-    def is_valid(shp: Geometry) -> typing.Tuple[bool, str]:  # pragma: no cover
+    def is_valid(shp: Geometry) -> tuple[bool, str]:  # pragma: no cover
         ...
 
     @staticmethod
@@ -78,7 +86,7 @@ class Status:
 
 class ShapelyChecker:
     @staticmethod
-    def is_valid(shp: Geometry) -> typing.Tuple[bool, str]:
+    def is_valid(shp: Geometry) -> tuple[bool, str]:
         if is_valid(shp):
             return True, ''
         return False, is_valid_reason(shp)
@@ -110,7 +118,7 @@ class ShapelyChecker:
 
 class SpherelyChecker:
     @staticmethod
-    def is_valid(shp) -> typing.Tuple[bool, str]:
+    def is_valid(shp) -> tuple[bool, str]:
         if spherely is None:  # pragma: no cover
             return True, ''
         try:
@@ -158,9 +166,10 @@ class SpherelyChecker:
         raise ValueError('Could not make the polygon valid')  # pragma: no cover
 
 
-def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geojson.Geometry]],
-                    buffer: typing.Union[float, None] = 0.001,
-                    ) -> geojson.Geometry:
+def merged_geometry(
+        features: Iterable[Union[geojson.Feature, geojson.Geometry]],
+        buffer: Union[float, None] = 0.001,
+) -> geojson.Geometry:
     """
     Merge the geographic structures supplied as GeoJSON Features or Geometries.
 
@@ -191,9 +200,11 @@ def merged_geometry(features: typing.Iterable[typing.Union[geojson.Feature, geoj
     return res.__geo_interface__
 
 
-def fixed_geometry(feature: geojson.Feature,
-                   fix_longitude: bool = False,
-                   fix_antimeridian: bool = False) -> geojson.Feature:
+def fixed_geometry(
+        feature: geojson.Feature,
+        fix_longitude: bool = False,
+        fix_antimeridian: bool = False,
+) -> geojson.Feature:
     """
     Fixes a feature's geometry in-place.
 
@@ -231,8 +242,7 @@ def fixed_geometry(feature: geojson.Feature,
                 rings.append(ring)
             new_polys.append(rings)
     if fixed:  # Make sure we only fix what's broken!
-        new_feature = geojson.Feature(
-            type='Feature', geometry=dict(type='MultiPolygon', coordinates=new_polys))
+        new_feature = geojson.get_feature(dict(type='MultiPolygon', coordinates=new_polys), {})
     else:
         new_feature = feature
     if fix_antimeridian:
@@ -250,14 +260,16 @@ def fixed_geometry(feature: geojson.Feature,
     return feature
 
 
-def shapely_simplified_geometry(feature: geojson.Feature,
-                                tolerance: float = 0.001) -> geojson.Feature:
+def shapely_simplified_geometry(
+        feature: geojson.Feature,
+        tolerance: float = 0.001,
+) -> geojson.Feature:
     """
     With the default tolerance of 0.001, typical geo features with detailed coastlines will be
     reduced (in terms of GeoJSON size) by a factor of 10.
     """
-    feature['geometry'] = simplify(
-        shape(feature['geometry']), tolerance=tolerance).__geo_interface__
+    feature['geometry'] = geojson.get_geometry(
+        simplify(shape(feature['geometry']), tolerance=tolerance))
     return feature
 
 
@@ -328,7 +340,7 @@ def remove_spikes_from_polygon(geom, min_angle=1.0):
     return geom  # pragma: no cover
 
 
-def correct_longitude(lon: typing.Union[int, float]) -> typing.Union[int, float]:
+def correct_longitude(lon: Union[int, float]) -> Union[int, float]:
     """
     Coerces a geographic longitude into the -180..180 degree range.
     """

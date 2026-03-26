@@ -1,8 +1,9 @@
 """
 Functionality to create GeoJSON FeatureCollections encoding speaker area information for datasets.
 """
-import typing
+from typing import Union
 import collections
+from collections.abc import Iterable
 
 from clldutils.color import qualitative_colors
 from pycldf import Dataset
@@ -15,38 +16,38 @@ except ImportError:  # pragma: no cover
     Glottolog = type(None)
     pyglottologLanguoid = type(None)
 
-from . import geojson
 from cldfgeojson.geometry import merged_geometry
+from . import geojson
 
 __all__ = [
     'feature_collection',
     'aggregate',
 ]
 
-Languoid = typing.Union[pyglottologLanguoid, pycldfLanguage]
+Languoid = Union[pyglottologLanguoid, pycldfLanguage]
 
 
-def feature_collection(features: typing.List[dict], **properties) -> dict:
+def feature_collection(features: list[geojson.Feature], **properties) -> dict:
     """
     A helper to create GeoJSON FeatureCollection objects from a list of features.
     """
     return dict(type="FeatureCollection", features=features, properties=properties)
 
 
-def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
-              glottolog: typing.Union[Glottolog, Dataset],
-              level: str = 'language',
-              buffer: typing.Union[float, None] = 0.001,
-              opacity: float = 0.8,
-              ) -> typing.Tuple[
-        typing.List[geojson.Feature],
-        typing.List[typing.Tuple[Languoid, list, str]]]:
+def aggregate(
+        shapes: Iterable[tuple[str, geojson.Feature, str]],
+        glottolog: Union[Glottolog, Dataset],
+        level: str = 'language',
+        buffer: Union[float, None] = 0.001,
+        opacity: float = 0.8,
+) -> tuple[list[geojson.Feature], list[tuple[Languoid, list, str]]]:
     """
     Aggregate features, merging based on same language of family level Glottocode.
 
     :param shapes: Iterable of (feature ID, GeoJSON feature, Glottocode) triples.
     :param glottolog: Glottolog data can be supplied either as `pyglottolog.Glottolog` API object \
-    or as glottolog-cldf `pycldf.Dataset`.
+    or as glottolog-cldf `pycldf.Dataset`. The languoids returned will then be of the appropriate \
+    type.
     :param buffer: Amount of buffering to apply when merging shapes.
     :return: A pair (features, languoids)
     """
@@ -97,13 +98,12 @@ def aggregate(shapes: typing.Iterable[typing.Tuple[str, geojson.Feature, str]],
             [p[0] for p in polys_by_code[gc]],
             glangs[lang2fam[gc]].name if lang2fam[gc] != gc else None),
         )
-        features.append(dict(
-            type="Feature",
-            properties={
+        features.append(geojson.get_feature(
+            merged_geometry([p[1] for p in polys_by_code[gc]], buffer=buffer),
+            {
                 'title': glangs[gc].name,
                 'fill': colors[lang2fam[gc]],
                 'family': glangs[lang2fam[gc]].name if lang2fam[gc] != gc else None,
                 'cldf:languageReference': gc,
-                'fill-opacity': opacity},
-            geometry=merged_geometry([p[1] for p in polys_by_code[gc]], buffer=buffer)))
+                'fill-opacity': opacity}))
     return features, languoids
