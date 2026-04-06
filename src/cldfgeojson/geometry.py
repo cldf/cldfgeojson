@@ -209,19 +209,28 @@ def merged_geometry(
     return res.__geo_interface__
 
 
-def _iter_rings(polys, fix_longitude: bool) -> Generator[tuple[list, bool], None, None]:
+def _iter_rings(
+        polys,
+        fix_longitude: bool,
+        remove_z_coord: bool
+) -> Generator[tuple[list, bool], None, None]:
     for poly in polys:
         fixed = False
         rings = []
         for ring in poly:
-            if fix_longitude:
+            if fix_longitude or remove_z_coord:
                 coords = []
-                for lon, lat in ring:
-                    flon = correct_longitude(lon)
-                    if flon != lon:
-                        fixed = True
-                        lon = flon
-                    coords.append([lon, lat])
+                for coord in ring:
+                    if remove_z_coord:
+                        if len(coord) > 2:
+                            fixed = True
+                        coord = coord[:2]
+                    if fix_longitude:
+                        flon = correct_longitude(coord[0])
+                        if flon != coord[0]:
+                            fixed = True
+                            coord[0] = flon
+                    coords.append(coord)
                 ring = coords
             rings.append(ring)
         yield rings, fixed
@@ -235,6 +244,7 @@ def fixed_geometry(
         feature: geojson.Feature,
         fix_longitude: bool = False,
         fix_antimeridian: bool = False,
+        remove_z_coord: bool = True,
 ) -> geojson.Feature:
     """
     Fixes a feature's geometry in-place.
@@ -253,11 +263,11 @@ def fixed_geometry(
     if feature['geometry']['type'] == 'Polygon':
         feature['geometry'] = _make_multipolygon([feature['geometry']['coordinates']])
     fixed, new_polys = False, []
-    if fix_longitude:
+    if fix_longitude or remove_z_coord:
         polys = feature['geometry']['coordinates'] if feature['geometry']['type'] == 'MultiPolygon'\
             else [feature['geometry']['coordinates']]
 
-        new_polys = list(_iter_rings(polys, fix_longitude))
+        new_polys = list(_iter_rings(polys, fix_longitude, remove_z_coord))
         if any(fx for _, fx in new_polys):
             fixed = True
         new_polys = [p for p, _ in new_polys]

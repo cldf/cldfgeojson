@@ -116,7 +116,7 @@ def test_fixed_geometry(recwarn):
             "type": "MultiPolygon",
             "coordinates": [
                 [[
-                    [5, 0],
+                    [5, 0, 0],
                     [-5, 0],
                     [-5, 5],
                     [0, 5],
