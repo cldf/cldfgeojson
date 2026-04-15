@@ -84,6 +84,9 @@ def run(args):
                 feature = dict(type='Feature', geometry=shp.__geo_interface__, properties=props)
             elif lg.cldf.speakerArea:  # pragma: no cover
                 feature = lg.speaker_area_as_geojson_feature
+            else:  # pragma: no cover
+                args.log.warning('No speaker area for language ID {}'.format(lg.id))
+                continue
             for k, v in lg.data.items():
                 if k not in {'ID', 'Name', 'Latitude', 'Longitude', 'Glottocode'}:
                     feature['properties'].setdefault(k, str(v))
@@ -121,6 +124,6 @@ def run(args):
                     args.log.warning('No Glottolog coordinate for language ID {}'.format(lg.id))
     for lang in lids:
         if lang not in checked:
-            args.log.warning(f'No speaker area for language ID {lang}')
+            args.log.warning(f'{lang} not found in polygon dataset.')
 
     print(json.dumps(feature_collection(features), indent=2))
