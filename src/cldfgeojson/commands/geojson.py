@@ -75,8 +75,10 @@ def run(args):
                     geojsons2[lid2gc[lid][1]] = v
 
     features = []
+    checked = []
     for lg in ds.objects('LanguageTable'):
         if (ds2 is None and lg.id in lids) or (ds2 and lg.cldf.glottocode in lids):
+            checked.append(lg.cldf.glottocode)
             if lg.cldf.speakerArea in geojsons:
                 shp, props = geojsons[lg.cldf.speakerArea][lg.cldf.id]
                 feature = dict(type='Feature', geometry=shp.__geo_interface__, properties=props)
@@ -108,7 +110,7 @@ def run(args):
                     })
                     features.append(feature)
 
-            if args.glottolog:
+            if args.glottolog and not args.no_glottolog:
                 if lg.cldf.glottocode in gl:
                     glang = gl[lg.cldf.glottocode]
                     features.append(dict(
@@ -120,4 +122,8 @@ def run(args):
                     ))
                 else:  # pragma: no cover
                     args.log.warning('No Glottolog coordinate for language ID {}'.format(lg.id))
+
+    for lang in set(lids) - set(checked):
+        args.log.warning(f'{lang} not found in polygon dataset.')
+
     print(json.dumps(feature_collection(features), indent=2))
