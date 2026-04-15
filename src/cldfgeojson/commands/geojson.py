@@ -122,8 +122,8 @@ def run(args):
                     ))
                 else:  # pragma: no cover
                     args.log.warning('No Glottolog coordinate for language ID {}'.format(lg.id))
-    for lang in lids:
-        if lang not in checked:
-            args.log.warning(f'{lang} not found in polygon dataset.')
+
+    for lang in set(lids) - set(checked):
+        args.log.warning(f'{lang} not found in polygon dataset.')
 
     print(json.dumps(feature_collection(features), indent=2))
