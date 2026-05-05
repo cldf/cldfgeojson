@@ -9,7 +9,6 @@
 - Make sure flake8 passes:
   ```shell
   flake8 src
-  pylint src
   ```
 
 - Make sure pylint passes with a score of 10:

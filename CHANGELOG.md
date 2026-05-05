@@ -1,6 +1,11 @@
 # Changes
 
 
+## [3.0.0] - 2026-05-05
+
+Compatibility with modern versions of `cldfbench`, `clldutils` and `pycldf`.
+
+
 ## [2.0.1] - 2026-03-25
 
 Pin dependencies of packages about to get incompatible new major versions.
