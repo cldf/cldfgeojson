@@ -80,8 +80,10 @@ def run(args):  # pylint: disable=C0116,R0912,R0914
         gl = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.longitude}
 
     features = []
+    checked = []
     for lg in ds.objects('LanguageTable'):
         if (ds2 is None and lg.id in lids) or (ds2 and lg.cldf.glottocode in lids):
+            checked.append(lg.cldf.glottocode)
             if lg.cldf.speakerArea in geojsons:
                 geom, props = geojsons[lg.cldf.speakerArea][lg.cldf.id]
             elif lg.cldf.speakerArea:  # pragma: no cover
@@ -111,7 +113,7 @@ def run(args):  # pylint: disable=C0116,R0912,R0914
                 })
                 features.append(get_feature(geom, props))
 
-            if args.glottolog:
+            if args.glottolog and not args.no_glottolog:
                 if lg.cldf.glottocode in gl:
                     glang = gl[lg.cldf.glottocode]
                     features.append(get_feature(
@@ -121,4 +123,8 @@ def run(args):  # pylint: disable=C0116,R0912,R0914
                             "marker-color": colors[lg.id]}))
                 else:  # pragma: no cover
                     args.log.warning('No Glottolog coordinate for language ID %s', lg.id)
+
+    for lang in set(lids) - set(checked):
+        args.log.warning('%s not found in polygon dataset.', lang)
+
     print(json.dumps(feature_collection(features), indent=2))
