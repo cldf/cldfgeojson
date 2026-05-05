@@ -1,19 +1,23 @@
+"""
+Dealing with GeoJSON geometries (in particular of typoe Polygon and MultiPolygon).
+"""
 import json
-import typing
+from typing import Any, TypedDict, Literal, Union
 import collections
 
 from clldutils import jsonlib
 
-__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered', 'dump', 'dumps']
+__all__ = ['MEDIA_TYPE', 'Geometry', 'Feature', 'pacific_centered', 'dump', 'dumps',
+           'get_geometry', 'get_feature']
 
 # See https://datatracker.ietf.org/doc/html/rfc7946#section-12
 MEDIA_TYPE = 'application/geo+json'
 
 
-JSONObject = typing.Dict[str, typing.Any]
+JSONObject = dict[str, Any]
 
 
-class Geometry(typing.TypedDict):
+class Geometry(TypedDict):
     """
     A Geometry object represents points, curves, and surfaces in
     coordinate space.  Every Geometry object is a GeoJSON object no
@@ -28,18 +32,38 @@ class Geometry(typing.TypedDict):
     coordinates: list
 
 
-class Feature(typing.TypedDict, total=False):
+def get_geometry(obj) -> Geometry:
+    """Convenient way to create a GeoJSON geometry object."""
+    if hasattr(obj, '__geo_interface__'):
+        return obj.__geo_interface__
+    if isinstance(obj, dict):
+        assert set(obj.keys()) == set(Geometry.__annotations__)
+        return obj
+    raise TypeError(obj)  # pragma: no cover
+
+
+class Feature(TypedDict, total=False):
     """
     See https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
     """
-    type: str
+    type: Literal['Feature']
     geometry: Geometry
-    properties: typing.Union[None, JSONObject]
-    id: typing.Union[str, float, int]
+    properties: Union[None, JSONObject]
+    id: Union[str, float, int]
     bbox: list
 
 
-def pacific_centered(obj: typing.Union[Geometry, Feature]) -> typing.Union[Geometry, Feature]:
+def get_feature(geometry, properties, id_=None, bbox=None) -> Feature:
+    """Convenient way to create a GeoJSON feature object."""
+    res: Feature = {'type': 'Feature', 'geometry': get_geometry(geometry), 'properties': properties}
+    if id_:
+        res['id'] = id_  # pragma: no cover
+    if bbox:
+        res['bbox'] = bbox  # pragma: no cover
+    return res
+
+
+def pacific_centered(obj: Union[Geometry, Feature]) -> Union[Geometry, Feature]:
     """
     Adjust longitudes of coordinates of objects to force a pacific-centered position in place.
 
@@ -56,7 +80,7 @@ def pacific_centered(obj: typing.Union[Geometry, Feature]) -> typing.Union[Geome
 
     :return:
     """
-    PACIFIC_CENTERED = 154
+    PACIFIC_CENTERED = 154  # pylint: disable=C0103
 
     def fix_position(pos):
         pos = list(pos)
@@ -90,7 +114,7 @@ def pacific_centered(obj: typing.Union[Geometry, Feature]) -> typing.Union[Geome
 # To make GeoJSON as small as possible, we provide functionality to write GeoJSON with coordinates
 # limited to 5 decimal places, corresponding to a precision of ~1m.
 #
-class FloatWrapper:
+class FloatWrapper:  # pylint: disable=R0903
     """
     In order to use the extension mechanism of Python's json.JSONEncode, we have to wrap floats in
     an "unknown" type.
@@ -120,17 +144,23 @@ def wrap_floats(obj, in_coordinates=False):
 
 
 class MeterPrecisionFloatEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, FloatWrapper):
-            return round(obj.value, 5)
-        return super().default(obj)
+    """
+    Overly precise floats can increase the size of GeoJSON files considerably.
+
+    The encoder implemented here limits the number of decimal places such that the precision of
+    geographic coordinates is limited to meters.
+    """
+    def default(self, o):  # pylint: disable=C0116
+        if isinstance(o, FloatWrapper):
+            return round(o.value, 5)
+        return super().default(o)
 
 
-def dump(obj, *args, **kw):
+def dump(obj, *args, **kw):  # pylint: disable=C0116
     kw['cls'] = MeterPrecisionFloatEncoder
     return jsonlib.dump(wrap_floats(obj), *args, **kw)
 
 
-def dumps(obj, **kw):
+def dumps(obj, **kw) -> str:  # pylint: disable=C0116
     kw['cls'] = MeterPrecisionFloatEncoder
     return json.dumps(wrap_floats(obj), **kw)

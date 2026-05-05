@@ -116,7 +116,7 @@ def test_fixed_geometry(recwarn):
             "type": "MultiPolygon",
             "coordinates": [
                 [[
-                    [5, 0],
+                    [5, 0, 0],
                     [-5, 0],
                     [-5, 5],
                     [0, 5],
@@ -179,7 +179,7 @@ def test_fixed_geometry(recwarn):
 
 def test_SpherelyChecker(fixtures_dir):
     if spherely is None:
-        return
+        return  # pragma: no cover
     f = load(fixtures_dir / 'irish.geojson')
     _ = SpherelyChecker.fixer(shape(f['geometry']))
 

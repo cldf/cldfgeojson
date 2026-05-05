@@ -1,0 +1,100 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                5.0,
+                -5.0
+              ],
+              [
+                0.0,
+                -5.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                5.0,
+                0.0
+              ],
+              [
+                5.0,
+                -5.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                0.0,
+                5.0
+              ],
+              [
+                0.0,
+                0.0
+              ],
+              [
+                -5.0,
+                0.0
+              ],
+              [
+                -5.0,
+                5.0
+              ],
+              [
+                0.0,
+                5.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                15.0,
+                10.0
+              ],
+              [
+                15.0,
+                5.0
+              ],
+              [
+                10.0,
+                5.0
+              ],
+              [
+                10.0,
+                10.0
+              ],
+              [
+                15.0,
+                10.0
+              ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "title": "bare1276: Bar\u00e9",
+        "fill": "#F2F3F4",
+        "family": "Arawakan",
+        "cldf:languageReference": "bare1276",
+        "fill-opacity": 0.5,
+        "Macroarea": "None",
+        "ISO639P3code": "None",
+        "Feature_IDs": "['2']",
+        "Glottolog_Languoid_Level": "language",
+        "Family": "Arawakan",
+        "Speaker_Area": "languages",
+        "stroke": "#F2F3F4"
+      }
+    }
+  ],
+  "properties": {}
+}

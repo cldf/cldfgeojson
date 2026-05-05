@@ -10,14 +10,16 @@ import typing
 import itertools
 import statistics
 
+from shapely import Geometry
 from shapely.geometry import shape, Polygon, MultiPolygon
 from clldutils.clilib import Table, add_format
 from pycldf.cli_util import add_dataset, get_dataset, add_catalog_spec
 
-from cldfgeojson.util import speaker_area_shapes
+from cldfgeojson.util import speaker_area_shapes, ShapeDictType
 
 
-def spread(shp) -> typing.Tuple[float, typing.List[Polygon]]:
+def spread(shp: Geometry) -> typing.Tuple[float, typing.List[Polygon]]:
+    """Compute the spread of polygons in a MultiPolygon."""
     dist = 0.0
     polys = list(shp.geoms)
     if len(polys) > 2:
@@ -27,7 +29,7 @@ def spread(shp) -> typing.Tuple[float, typing.List[Polygon]]:
     return dist, polys
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     add_catalog_spec(parser, 'glottolog')
     add_format(parser, default='simple')
@@ -35,19 +37,20 @@ def register(parser):
     parser.add_argument('--threshold', type=float, default=1.0)
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     ds = get_dataset(args)
-    geojsons = speaker_area_shapes(ds, fix_geometry=True)[0]
+    geojsons: ShapeDictType = speaker_area_shapes(ds, fix_geometry=True)[0]
 
     glangs = set()
     if ('LanguageTable', 'Glottolog_Languoid_Level') not in ds:
         assert args.glottolog
         glangs = {lg.id for lg in args.glottolog.api.languoids() if lg.level.name == 'language'}
 
-    with (Table(args, 'ID', 'Spread', 'NPolys') as t):
+    with Table(args, 'ID', 'Spread', 'NPolys') as t:
         for lg in ds.objects('LanguageTable'):
             if lg.cldf.glottocode in glangs or \
                     (lg.data.get('Glottolog_Languoid_Level') == 'language'):
+                shp = None
                 if lg.cldf.speakerArea in geojsons:
                     shp = geojsons[lg.cldf.speakerArea][lg.cldf.id]
                 elif lg.cldf.speakerArea:  # pragma: no cover
@@ -57,8 +60,4 @@ def run(args):
                     mdist, polys = spread(shp)
                     if not mdist or mdist < args.threshold:
                         continue
-                    t.append((
-                        lg.id,
-                        mdist,
-                        len(polys),
-                    ))
+                    t.append((lg.id, mdist, len(polys)))
